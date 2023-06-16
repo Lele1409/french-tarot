@@ -37,16 +37,19 @@
 ### Playing
 
 #### Dealing cards:
-- The dealer is chosen randomly, the player to his left splits the stack at some
-  random point but both resulting stacks must have more than 3 cards, then the stack
-  gets reassembled again
+- The cards are shuffled before the game starts, but are not shuffled on following deals
+- The dealer is chosen randomly at first, after the role is passed over counter-clockwise
+- The player to the left of the dealer left splits the stack at some random point but both
+  resulting stacks must have more than 3 cards, then the stack gets reassembled again
 - Cards are dealt counter-clockwise
-- 3 at a time
+- 3 cards at a time are given to each player in a counter-clockwise order
 - the dog:
     - six cards are left to put into the dog
-    -
+    - not the first card of the deck, not the last card of the deck, not to cards in a 
+      row they have to be spaced by 3 cards dealt to a player
 
 #### Announcing Contracts
+- if none of the players chooses a contract the cards are 
 
 #### Any trick
 
