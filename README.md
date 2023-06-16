@@ -1,7 +1,5 @@
 # french-tarot
 
----
-
 ## Game-Flow
 
 ### Create Game
