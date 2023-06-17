@@ -1,4 +1,4 @@
-# french-tarot
+﻿# french-tarot
 
 ## Game-Flow
 
@@ -48,24 +48,58 @@
     - not the first card of the deck, not the last card of the deck, not to cards in a 
       row they have to be spaced by 3 cards dealt to a player
 
-#### Announcing Contracts
-- if none of the players chooses a contract the cards are 
+#### Choosing a contract
+- if none of the players chooses a contract (passes) the cards are put together and 
+  re-dealt by the next dealer (person to the right of the original dealer)
+- contracts can be outbidden by other players, but every player bids only once 
+- starting from the person to the right of the dealer, continuing counter-clockwise 
+  ending at the dealer
+- all contracts equal or below the current contract cannot be choosen anymore
+- if someone chooses a "guarde against the dog" this person is automatically the taker 
+  as no one can outbid him anymore
+
+#### After choosing the contract (and _before the first trick?/before the aside?_)
+- a player can announce a Chelem which he gets if he wins all tricks, the excuse being 
+  played only in the last trick (for the Petit au Bout this means that it is in the 
+  second to last trick)
+
+#### From the dog to the aside
+- all the cards from the dog are shown to all players
+- the taker takes the cards into his hand and puts away the same number of cards into his 
+  aside
+- depending on the contract (from lowest to highest):
+  - "small": normal behaviour
+  - "guard": normal behaviour
+  - "guard without the dog": the cards from the dog go automatically into the takers 
+    aside, without anyone looking at them
+  - "guard against the dog": the cards from the dog go automatically into the Defenses 
+    points, without anyone looking at them
+- kings and trumps cannot be put into the aside, except if a trump has to be put into 
+  the aside, but it then has to be shown to the Defense
 
 #### Any trick
+- a trick is played counter-clockwise
 
 #### First trick
+- the first player to play is the player to the right of the dealer
+- a player wanting to announce a handful can do this before playing his first card, 
+  handfuls, double handfuls and triple handful respectively need 10, 13 and 15 trumps, 
+  all the cards of a handful must be shown to the other players including cards that 
+  may be in the aside (in case the player has only trumps and kings)
 
 #### Last trick
-- Excuse is lost if played in this trick
+- Excuse is lost if played in this trick, except if it is the last card played by a player
+  who has announced a Chelem
 
 ### End of the game
 
 #### Determining a winner
-- Determine if the contract was fulfilled by the taker
+- Determine if the contract was fulfilled by the taker depending on the points needed 
+  depending on the oudlers taken
 
 #### Points
 - In total there are 91 points
 
-## Rules
+## Official rules
 [Official link](https://www.fftarot.fr/assets/documents/R-RO201206.pdf), french source
 by the FFT
