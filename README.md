@@ -1,4 +1,4 @@
-﻿# french-tarot
+﻿# french-tarot, lol
 
 ## Game-Flow
 
