@@ -1,4 +1,4 @@
-﻿# french-tarot
+﻿# french-tarot, a python program
 
 ## Game-Flow
 
