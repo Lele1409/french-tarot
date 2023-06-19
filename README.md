@@ -9,20 +9,23 @@
 - Overwrite the rules depending on the variant played:
     - 3 player variant:
         - cards are dealt four at a time
-        - handfuls, double handfuls and triple handful respectively need 13, 15 and 18 trumps
+        - handfuls, double handfuls and triple handful respectively need 13, 15 and 18 
+          trumps
         - if the player taking is short of 1/2 points he misses the contract by one point,
           on the other hand if he is over by 1/2 points he makes the contract by one point
-        - for the score to be zero at the end of the game, the takers points are multiplied
-          by 2
+        - for the score to be zero at the end of the game, the takers points are 
+          multiplied by 2
     - 5 player variant: (assuming the fifth player is indeed playing instead of that
       person exchanging the role of "dead" hence not playing)
         - the dog only contains three cards
         - before touching the dog, the taker calls a king (if he has all four he can call
           a queen, same goes for the queen or the knight), he can call himself
         - the first trick cannot be started with a card of the suit of the king called
-        - handfuls, double handfuls and triple handful respectively need 8, 10 and 13 trumps
-        - if the player taking (together with his partner) is short of 1/2 points he misses
-          the contract by one point, on the other hand if he is over by 1/2 points he makes
+        - handfuls, double handfuls and triple handful respectively need 8, 10 and 13 
+          trumps
+        - if the player taking (together with his partner) is short of 1/2 points he 
+          misses the contract by one point, on the other hand if he is over by 1/2 points 
+          he makes
           the contract by one point
         - for the score to be zero at the end of the game, points for the taker and his
           partner are split 2/3 for the taker and 1/3 for his partner assuming he has one,
@@ -72,24 +75,37 @@
   - "guard": normal behaviour
   - "guard without the dog": the cards from the dog go automatically into the takers 
     aside, without anyone looking at them
-  - "guard against the dog": the cards from the dog go automatically into the Defenses 
+  - "guard against the dog": the cards from the dog go automatically into the Defences 
     points, without anyone looking at them
 - kings and trumps cannot be put into the aside, except if a trump has to be put into 
-  the aside, but it then has to be shown to the Defense
+  the aside, but it then has to be shown to the Defence
 
 #### Any trick
 - a trick is played counter-clockwise
+- if the first card played is a trump following players have to play a trump of higher 
+  value than the highest value trump already played in the trick, if this is not 
+  possible a lower value trump has to be played
+- if a suit is played other players have to play any other card of the same suit
+- if a player cannot play the suit demanded he has to play a trump, if the player 
+  before him played a trump too, this trump will need to be of higher value than the last
+- if a player has no card of the given suit nor a trump, any other card can be played
+- if the first card of the trick is the Excuse the determining card for the trick is 
+  the next one
+- the Excuse goes back to the player who's played it, but a low value card has to be 
+  given to the opposing team as fast as possible when taking back the card
 
 #### First trick
 - the first player to play is the player to the right of the dealer
 - a player wanting to announce a handful can do this before playing his first card, 
   handfuls, double handfuls and triple handful respectively need 10, 13 and 15 trumps, 
   all the cards of a handful must be shown to the other players including cards that 
-  may be in the aside (in case the player has only trumps and kings)
+  may be in the aside (in case the player has only trumps and kings), the excuse can 
+  count to the trumps but can only be the last one added to the hanful and only if 
+  there are no other trumps
 
 #### Last trick
-- Excuse is lost if played in this trick, except if it is the last card played by a player
-  who has announced a Chelem
+- Excuse is not lost if it is the last card played by a player who would be winning a 
+  Chelem
 
 ### End of the game
 
@@ -98,7 +114,18 @@
   depending on the oudlers taken
 
 #### Points
-- In total there are 91 points
+- In total there are 91 points on the cards
+- If the Excuse is held by the Defence in case of a chelem it is worth 4 points
+- the difference of the actual points made and the points needed to get to a win 
+  (multiplied by the contracts multiplier _n_ in {1, 2, 4, 6}) plus 25 points make up 
+  the points of the taker, them being negative, zero or positive
+- to the points of the takers you have to add or remove points for the handfuls (20, 30 
+  or 40 points), depending on who won the last trick and if it contained the Petit add 
+  or deduct 10 multiplied by _n_
+- add points for a possible Chelem 
+- the defendants each get this sum
+- those points then have to be multiplied by 3, the number of players in the Defence, 
+  resulting in the points for the taker
 
 ## Official rules
 [Official link](https://www.fftarot.fr/assets/documents/R-RO201206.pdf), french source
