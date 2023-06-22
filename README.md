@@ -31,12 +31,6 @@
           partner are split 2/3 for the taker and 1/3 for his partner assuming he has one,
           otherwise the taker gets 3/3 of the points
 
-#### Create the cards:
-- represented in form of a list of 78 integers, each integer ranging from 1
-  to 78 is a CardId
-- allows to display the actual CardName to the user via a translation layer where each
-  CardId is associated to a CardName containing a description of its suit and its name
-
 ### Playing
 
 #### Dealing cards:
