@@ -1,4 +1,4 @@
-from random import shuffle
+from random import shuffle, randint
 
 
 class Game:
@@ -22,9 +22,14 @@ class Game:
         self.deck = deck
 
         # init variables
+        self.dogSizes = {
+            3: "6",
+            4: "6",
+            5: "3"
+        }
         self.playedTricks = []
         self.dog = []
-        self.players = [Player() for player in range(playerCount)]
+        self.players = [Player() for _ in range(playerCount)]
 
     @staticmethod
     def create_deck() -> list:
@@ -46,28 +51,34 @@ class Game:
         # play tricks (trick=int)
 
     def deal(self):
-        dogSize = 6
-        cardsInTheDog = 0
+        dogSize = self.dogSizes[self.playerCount]
+        cardsInDog = [(78 - dogSize) / 3 + dogSize * False]
+        for _ in range(dogSize):
+            i = randint(0, len(cardsInDog) - 1)
+            if cardsInDog[i] == True:  # NOQA
+                cardsInDog[i+1] = True
+            else:
+                cardsInDog[i+1] = True
 
-        while self.deck:
-            for player in self.players:
-                # Cards can only be added to the dog one at a time, it cannot be the last card of the deal, and a
-                # player needs to be getting cards in between. This means that at the end, if the dog isn't full, every
-                # possible card will need to go into the dog still keeping the distancing of three cards given to
-                # players, this state starts when there are fewer cards left than (dogSize-cardsInTheDog+1)*3
-                if len(self.deck) < (dogSize + 1) * 3:
-                    self.dog.append(self.deck[0])
-
+        nextPlayer = 0
+        for cardInDog in cardsInDog:
+            if cardInDog:
+                self.dog.append(self.deck.pop(0))
+            else:
                 cardsDealt = [self.deck.pop(i) for i in range(3)]
-                player.addCardsToHand(cardsDealt)
+                self.players[nextPlayer].addCardsToHand(cardsDealt)
+
+                nextPlayer += 1
+                if nextPlayer > self.playerCount:
+                    nextPlayer = 0
 
 
 class Player:
     def __init__(self):
-        self.cards = []
+        self.hand = []
 
-    def addCardsToHand(self, card: str | list) -> None:
-        self.cards.append(card)
+    def addCardsToHand(self, card: list) -> None:
+        self.hand.append(card)
 
 
 class GameException(Exception):
