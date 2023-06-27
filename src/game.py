@@ -2,11 +2,11 @@ from random import shuffle, randint
 
 
 class Game:
-    def __init__(self, playerCount: int, deck=None, matchPoints=None, lastDealer=0):
+    def __init__(self, playerCount: int, deck=None, matchPoints=None, lastDealer=1):
         # VALIDATE PARAMETERS
         # playerCount: is limited to specific values
         if playerCount not in [3, 4, 5]:
-            raise GameException(f"playerCount has to be 3, 4 or 5")
+            raise GameException(f"Parameter playerCount has to be 3, 4 or 5")
         else:
             self.playerCount = playerCount
 
@@ -38,8 +38,6 @@ class Game:
 
         # Create a list of player objects
         self.players = [Player(n) for n in range(playerCount)]
-        # Set the dealer
-        self.dealer = 0
 
     @staticmethod
     def _create_deck() -> list:
@@ -47,24 +45,25 @@ class Game:
         suits = ['♤', '♡', '♧', '♢']
         values = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'C', 'Q', 'K']
 
-        # Trumps
+        # Trumps, ex: "15T"
         trumps = [f"{n}T" for n in range(1, 21 + 1)]
-        # Suit cards
-        cards = [f"{values[value]}{suits[suit]}" for suit in range(4) for value in range(14)]
+        # Suit cards, ex: "1♤" or "K♧"
+        cards = [f"{values[value]}{suits[suit]}" for suit in range(len(suits)) for value in range(len(values))]
 
-        # Merge, add excuse
+        # Merge, add excuse "EX"
         deck = cards + trumps + ['EX']
         return deck
 
     def start(self):
         # deal cards
-        self.deal()
+        self._deal()
 
         # contract
+        self.awaitContracts()
 
         # play tricks (param trick:int)
 
-    def deal(self):
+    def _deal(self):  # TODO: add start deal at right of dealer
         """Get a list of booleans. For every boolean value, if True a card is put into the dog, if False three cards
         are given to next player starting at the player next to the dealer"""
 
@@ -77,6 +76,7 @@ class Game:
                 # Add the first card of the deck to the dog
                 self.dog.append(self.deck.pop(0))
             else:
+                print(self.deck)
                 # Give the three first of the deck cards to the next player
                 cardsDealt = [self.deck.pop(0) for _ in range(3)]
                 self.players[nextPlayer].addCardsToHand(cardsDealt)
@@ -110,6 +110,10 @@ class Game:
 
         return deals
 
+    def awaitContracts(self):
+        for i in range(self.playerCount):
+            self.players[self.dealer - i - 1].chooseContract()
+
 
 class Player:
     def __init__(self, name):
@@ -126,6 +130,9 @@ class Player:
         for card in cards:
             self.hand.append(card)
 
+    def chooseContract(self):
+        print(self.name)
+
 
 class GameException(Exception):
     """Class for errors"""
@@ -134,3 +141,9 @@ class GameException(Exception):
 if __name__ == '__main__':
     game = Game(4)
     game.start()
+    print()
+    game2 = Game(5, lastDealer=3)
+    game2.start()
+    print()
+    game3 = Game(3)
+    game3.start()
