@@ -42,7 +42,7 @@
 - 3 cards at a time are given to each player in a counter-clockwise order
 - the dog:
     - six cards are left to put into the dog
-    - not the first card of the deck, not the last card of the deck, not to cards in a 
+    - not the first card of the deck, not the last card of the deck, not two cards in a 
       row they have to be spaced by 3 cards dealt to a player
 
 #### Choosing a contract
