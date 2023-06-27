@@ -27,7 +27,6 @@ class Game:
             4: "6",
             5: "3"
         }
-        self.playedTricks = []
         self.dog = []
         self.players = [Player() for _ in range(playerCount)]
 
@@ -38,7 +37,7 @@ class Game:
         values = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'C', 'Q', 'K']
 
         trumps = [f"{n}T" for n in range(1, 21 + 1)]
-        cards = [f"{values[value]}{suits[suit]}" for suit in range(4) for value in range(13)]
+        cards = [f"{values[value]}{suits[suit]}" for suit in range(4) for value in range(14)]
 
         deck = cards + trumps + ['EX']
         return deck
@@ -51,25 +50,26 @@ class Game:
         # play tricks (trick=int)
 
     def deal(self):
-        dogSize = self.dogSizes[self.playerCount]
-        cardsInDog = [(78 - dogSize) / 3 + dogSize * False]
+        dogSize = int(self.dogSizes[self.playerCount])
+        deals = [False for _ in range(int((78 - dogSize) / 3 + dogSize))]
         for _ in range(dogSize):
-            i = randint(0, len(cardsInDog) - 1)
-            if cardsInDog[i] == True:  # NOQA
-                cardsInDog[i+1] = True
-            else:
-                cardsInDog[i+1] = True
+            # Don't replace a True with a True, don't have a True beside another True, don't have a leading or an
+            # ending True
+            i = 0
+            while deals[i] or deals[i+1] or deals[i-1] or i == 0:
+                i = randint(1, len(deals) - 2)
+            deals[i] = True
 
         nextPlayer = 0
-        for cardInDog in cardsInDog:
-            if cardInDog:
+        for deal in deals:
+            if deal:
                 self.dog.append(self.deck.pop(0))
             else:
-                cardsDealt = [self.deck.pop(i) for i in range(3)]
+                cardsDealt = [self.deck.pop(0) for _ in range(3)]
                 self.players[nextPlayer].addCardsToHand(cardsDealt)
 
                 nextPlayer += 1
-                if nextPlayer > self.playerCount:
+                if nextPlayer > self.playerCount-1:
                     nextPlayer = 0
 
 
@@ -77,8 +77,9 @@ class Player:
     def __init__(self):
         self.hand = []
 
-    def addCardsToHand(self, card: list) -> None:
-        self.hand.append(card)
+    def addCardsToHand(self, cards: list) -> None:
+        for card in cards:
+            self.hand.append(card)
 
 
 class GameException(Exception):
@@ -86,5 +87,5 @@ class GameException(Exception):
 
 
 if __name__ == '__main__':
-    game = Game(3)
-    print(game.deck)
+    game = Game(4)
+    game.start()
