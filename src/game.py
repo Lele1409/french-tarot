@@ -1,27 +1,44 @@
-from random import shuffle, randint
+import random as rd
 
 
 class Game:
-    def __init__(self, playerCount: int, deck=None, matchPoints=None, lastDealer=1):
+    def __init__(self, players=4, deck=None, matchPoints=None, lastDealer=1):
         # VALIDATE PARAMETERS
-        # playerCount: is limited to specific values
-        if playerCount not in [3, 4, 5]:
-            raise GameException(f"Parameter playerCount has to be 3, 4 or 5")
-        else:
-            self.playerCount = playerCount
+        # PARAM PLAYERS: is limited to specific values as described by the following error message:
+        paramPlayersExceptionString = "Parameter players has to be a int in [3, 4, 5] or a list of Player objects"
+        # If Players have to be created
+        if type(players) is int:
+            if players not in [3, 4, 5]:
+                raise GameException(paramPlayersExceptionString)
+            self.players = [Player(name=n, strategy='human') for n in range(players)]
 
-        # points: set scores if this is the first game in a match
+        # If the Players already existed
+        elif type(players) is list:
+            if any([player is not Player for player in players]) or len(players) not in [3, 4, 5]:
+                raise GameException(paramPlayersExceptionString)
+            self.players = players
+        else:
+            raise GameException(paramPlayersExceptionString)
+
+        # Make all the players able to access the games data by pointing at this instance of the Game object
+        for player in players:
+            player.joinGame(self)
+
+        # Make the playerCount more accessible
+        self.playerCount = len(players)
+
+        # PARAM MATCHPOINTS: set scores if this is the first game in a match
         if matchPoints is None:
-            matchPoints = [0 * playerCount]
+            matchPoints = [0 * self.playerCount]
         self.matchPoints = matchPoints
 
-        # deck: can be set from previous game, or a new deck will be created and shuffled
+        # PARAM DECK: can be set from previous game, or a new deck will be created and shuffled
         if deck is None:
             deck = self._create_deck()
-            shuffle(deck)
+            rd.shuffle(deck)
         self.deck = deck
 
-        # lastDealer: can be set from previous game, making the dealer change by one player
+        # PARAM LASTDEALER: can be set from previous game, making the dealer change by one player
         newDealer = lastDealer - 1
         if newDealer < 0:
             self.dealer = self.playerCount - 1
@@ -35,9 +52,6 @@ class Game:
             5: 3
         }
         self.dog = []
-
-        # Create a list of player objects
-        self.players = [Player(n) for n in range(playerCount)]
 
     @staticmethod
     def _create_deck() -> list:
@@ -59,7 +73,7 @@ class Game:
         self._deal()
 
         # contract
-        self.awaitContracts()
+        self._awaitContracts()
 
         # play tricks (param trick:int)
 
@@ -105,20 +119,42 @@ class Game:
             # don't have a leading or an ending True
             i = 0
             while deals[i] or deals[i + 1] or deals[i - 1] or i == 0:
-                i = randint(1, len(deals) - 2)
+                i = rd.randint(1, len(deals) - 2)
             deals[i] = True
 
         return deals
 
-    def awaitContracts(self):
+    def _awaitContracts(self):
+        self.highestContract = 'pass'
+        self.highestContractPlayer = None
+
+        # For every player
         for i in range(self.playerCount):
-            self.players[self.dealer - i - 1].chooseContract()
+            # Starting from the player to the right of the dealer and then counter-clockwise get the contract chosen by
+            # each player
+            currentPlayer = self.dealer - i - 1
+            chosenContract = self.players[currentPlayer].chooseContract(highestContract=self.highestContract)
+            # Update the instance fields if the chosen contract is higher than the one highest before
+            if chosenContract != 'pass':
+                self.highestContract = chosenContract
+                self.highestContractPlayer = currentPlayer
+
+        # Redeal if no one chose a contract
+        if self.highestContract is None:
+            ...  # TODO: redeal
 
 
 class Player:
-    def __init__(self, name):
+    def __init__(self, name: str, strategy: str):
         # VALIDATE PARAMETERS
-        self.name = name
+        # A name to easily indetify the players or the order in which they sit in
+        self.name = str(name)
+
+        validStrategies = ['human', 'random']
+        if strategy in validStrategies:  # TODO: more strategies
+            self.strategy = strategy
+        else:
+            raise PlayerException("Please use one of the following strategies:", validStrategies)
 
         # INITIALIZE VARIABLES
         self.hand = []
@@ -126,15 +162,46 @@ class Player:
     def rename(self, name):
         self.name = name
 
+    def _getDecision(self, question: str, options: [str]) -> str:
+        # Validate answers
+        if any([element is not str for element in options]) or type(options) is not list:
+            raise PlayerException("Parameter 'answers' in 'decide' only takes a list of strings")
+
+        # Show the question to the user if user is a human player and return the option chosen by the player
+        if self.strategy == 'human':
+            print(f"Player {self.name} hand: {self.hand}:\n", question)
+
+            playerAnswer = None
+            while playerAnswer not in options:
+                print("Please enter one of the following options", options)
+                playerAnswer = input()
+
+            return playerAnswer
+
+        # Return a randomly chosen option
+        elif self.strategy == 'random':
+            return rd.choice(options)
+
     def addCardsToHand(self, cards: list) -> None:
         for card in cards:
-            self.hand.append(card)
+            self.hand.append(card)  # TODO: isn't .extend() doing the same thing w/o the need for a 'for loop'?
 
-    def chooseContract(self):
-        print(self.name)
+    def chooseContract(self, highestContract='pass'):
+        contracts = ['pass', 'small', 'guard', 'guard w/o', 'guard against']
+        highestContractIndex = contracts.index(highestContract)
+        leftoverOptions = ['pass'] + contracts[highestContractIndex + 2:]
+        if len(leftoverOptions) > 0:
+            contract = self._getDecision("Choose a contract", leftoverOptions)
+            return contract
+        else:
+            return 'pass'
 
 
 class GameException(Exception):
+    """Class for errors"""
+
+
+class PlayerException(Exception):
     """Class for errors"""
 
 
