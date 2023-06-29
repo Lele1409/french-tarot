@@ -2,7 +2,7 @@ import random as rd
 
 
 class Game:
-    def __init__(self, players=4, deck=None, matchPoints=None, lastDealer=1):
+    def __init__(self, players=4, deck=None, matchPoints=None, lastDealer=None):
         # VALIDATE PARAMETERS
         # PARAM PLAYERS: is limited to specific values as described by the following error message:
         paramPlayersExceptionString = "Parameter players has to be a int in [3, 4, 5] or a list of Player objects"
@@ -20,12 +20,11 @@ class Game:
         else:
             raise GameException(paramPlayersExceptionString)
 
-        # Make all the players able to access the games data by pointing at this instance of the Game object
-        for player in players:
-            player.joinGame(self)
+        self.playerCount = len(self.players)
 
-        # Make the playerCount more accessible
-        self.playerCount = len(players)
+        # Make all the players able to access the games data by pointing at this instance of the Game object
+        for player in self.players:
+            player.joinGame(self)
 
         # PARAM MATCHPOINTS: set scores if this is the first game in a match
         if matchPoints is None:
@@ -39,19 +38,26 @@ class Game:
         self.deck = deck
 
         # PARAM LASTDEALER: can be set from previous game, making the dealer change by one player
-        newDealer = lastDealer - 1
-        if newDealer < 0:
-            self.dealer = self.playerCount - 1
+        if lastDealer is None:
+            self.dealer = 0
+        elif type(lastDealer) is int and lastDealer in range(0, self.playerCount + 1):
+            self.dealer = lastDealer
+            self._nextDealer()
         else:
-            self.dealer = newDealer
+            raise GameException("Parameter lastDealer has to be None or a integer in range()")
 
         # INITIALIZE VARIABLES
+        # Information about the number of cards in the dog
         self.dogSizes = {
             3: 6,
             4: 6,
             5: 3
         }
+        # A list containing the cards in the dog
         self.dog = []
+        # Information about the
+        self.highestContract = 'pass'
+        self.highestContractPlayer = None
 
     @staticmethod
     def _create_deck() -> list:
@@ -69,13 +75,14 @@ class Game:
         return deck
 
     def start(self):
-        # deal cards
-        self._deal()
-
-        # contract
-        self._awaitContracts()
+        # Make the players choose a contract after the cards are dealt to them
+        # If no contract is chosen, start over by redealing
+        while self.highestContract == 'pass':
+            self._deal()
+            self._awaitContracts()
 
         # play tricks (param trick:int)
+        print('PLAYING FIRST TRICK')
 
     def _deal(self):  # TODO: add start deal at right of dealer
         """Get a list of booleans. For every boolean value, if True a card is put into the dog, if False three cards
@@ -90,8 +97,7 @@ class Game:
                 # Add the first card of the deck to the dog
                 self.dog.append(self.deck.pop(0))
             else:
-                print(self.deck)
-                # Give the three first of the deck cards to the next player
+                # Give the three first cards of the deck to the next player
                 cardsDealt = [self.deck.pop(0) for _ in range(3)]
                 self.players[nextPlayer].addCardsToHand(cardsDealt)
 
@@ -124,10 +130,12 @@ class Game:
 
         return deals
 
-    def _awaitContracts(self):
-        self.highestContract = 'pass'
-        self.highestContractPlayer = None
+    def _nextDealer(self):
+        self.dealer -= 1
+        if self.dealer < 0:
+            self.dealer = self.playerCount - 1
 
+    def _awaitContracts(self) -> None:
         # For every player
         for i in range(self.playerCount):
             # Starting from the player to the right of the dealer and then counter-clockwise get the contract chosen by
@@ -140,8 +148,19 @@ class Game:
                 self.highestContractPlayer = currentPlayer
 
         # Redeal if no one chose a contract
-        if self.highestContract is None:
-            ...  # TODO: redeal
+        if self.highestContract == 'pass':
+            # For every player
+            for i in range(self.playerCount):
+                # Reset the players hands and get back the cards in the following order:
+                # start from the right of the dealer and in counter-clockwise order (just as during the deal)
+                self.deck.extend(self.players[self.dealer - i - 1].clearHand())
+            # finally add back the dog to the deck and empty it
+            self.deck.extend(self.dog)
+            self.dog = []
+
+    def end(self) -> tuple:
+        # Returns all information that is needed to start a new game with the already existing deck and players
+        pass
 
 
 class Player:
@@ -158,14 +177,18 @@ class Player:
 
         # INITIALIZE VARIABLES
         self.hand = []
+        self.game = None
 
-    def rename(self, name):
-        self.name = name
+    def rename(self, name) -> None:
+        self.name = str(name)
+
+    def joinGame(self, gameObject: Game):
+        self.game = gameObject
 
     def _getDecision(self, question: str, options: [str]) -> str:
-        # Validate answers
-        if any([element is not str for element in options]) or type(options) is not list:
-            raise PlayerException("Parameter 'answers' in 'decide' only takes a list of strings")
+        # Validate the format of the possible options
+        if any([type(element) is not str for element in options]):
+            raise PlayerException("Parameter 'options' in 'decide' only takes a list of strings")
 
         # Show the question to the user if user is a human player and return the option chosen by the player
         if self.strategy == 'human':
@@ -173,7 +196,7 @@ class Player:
 
             playerAnswer = None
             while playerAnswer not in options:
-                print("Please enter one of the following options", options)
+                print(f"Please enter one of the following options {options}:")
                 playerAnswer = input()
 
             return playerAnswer
@@ -183,14 +206,17 @@ class Player:
             return rd.choice(options)
 
     def addCardsToHand(self, cards: list) -> None:
-        for card in cards:
-            self.hand.append(card)  # TODO: isn't .extend() doing the same thing w/o the need for a 'for loop'?
+        self.hand.extend(cards)
+
+    def clearHand(self) -> list:
+        oldHand, self.hand = self.hand, []
+        return oldHand
 
     def chooseContract(self, highestContract='pass'):
         contracts = ['pass', 'small', 'guard', 'guard w/o', 'guard against']
         highestContractIndex = contracts.index(highestContract)
-        leftoverOptions = ['pass'] + contracts[highestContractIndex + 2:]
-        if len(leftoverOptions) > 0:
+        leftoverOptions = ['pass'] + contracts[highestContractIndex + 1:]
+        if len(leftoverOptions) > 1:
             contract = self._getDecision("Choose a contract", leftoverOptions)
             return contract
         else:
