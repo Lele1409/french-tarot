@@ -1,7 +1,14 @@
 import random as rd
 
 
-class Game:
+class Game:  # TODO: in a 3 player game, cards are dealt four at a time
+    # Information about the number of cards in the dog
+    dogSizes = {
+        3: 6,
+        4: 6,
+        5: 3
+    }
+
     def __init__(self, players=4, deck=None, matchPoints=None, lastDealer=None):
         # VALIDATE PARAMETERS
         # PARAM PLAYERS: is limited to specific values as described by the following error message:
@@ -47,15 +54,10 @@ class Game:
             raise GameException("Parameter lastDealer has to be None or a integer in range()")
 
         # INITIALIZE VARIABLES
-        # Information about the number of cards in the dog
-        self.dogSizes = {
-            3: 6,
-            4: 6,
-            5: 3
-        }
         # A list containing the cards in the dog
         self.dog = []
-        # Information about the
+
+        # Information about the contract chosen by the taker
         self.highestContract = 'pass'
         self.highestContractPlayer = None
 
@@ -88,6 +90,11 @@ class Game:
         """Get a list of booleans. For every boolean value, if True a card is put into the dog, if False three cards
         are given to next player starting at the player next to the dealer"""
 
+        # The deck also gets cut at some random place, but not closer to the ends of the deck than the size of a deal
+        # to a player
+        deckCutIndex = rd.randint(0 + 3, len(self.deck) - 1 - 3)
+        self.deck = self.deck[deckCutIndex:] + self.deck[:deckCutIndex]
+
         # List of booleans specifying the deal type
         deals = self._specifyDealOrder()
 
@@ -111,7 +118,7 @@ class Game:
         number of Trues equal to the dogSize"""
 
         # Predefined values according to the rules
-        dogSize = self.dogSizes[self.playerCount]
+        dogSize = Game.dogSizes[self.playerCount]
         # 78 is the total number of cards and 3 the number of cards given to a player at once, in an IRL game the
         # nbOfDeals would represent the number of times a dealer has to take cards from the deck and put them somewhere
         # else, either in a players hand or into the dog. In this function it represents the length of the deals list.
