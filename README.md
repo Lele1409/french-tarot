@@ -12,21 +12,21 @@
         - handfuls, double handfuls and triple handful respectively need 13, 15 and 18 
           trumps
         - if the player taking is short of 1/2 points he misses the contract by one point,
-          on the other hand if he is over by 1/2 points he makes the contract by one point
-        - for the score to be zero at the end of the game, the takers points are 
+          on the other hand, if he is over by 1/2 points he makes the contract by one 
+          point
+        - for the score to be zero at the end of the game, the taker's points are 
           multiplied by 2
     - 5 player variant: (assuming the fifth player is indeed playing instead of that
       person exchanging the role of "dead" hence not playing)
         - the dog only contains three cards
         - before touching the dog, the taker calls a king (if he has all four he can call
-          a queen, same goes for the queen or the knight), he can call himself
+          a queen, the same goes for the queen or the knight); he can call himself
         - the first trick cannot be started with a card of the suit of the king called
         - handfuls, double handfuls and triple handful respectively need 8, 10 and 13 
           trumps
-        - if the player taking (together with his partner) is short of 1/2 points he 
-          misses the contract by one point, on the other hand if he is over by 1/2 points 
-          he makes
-          the contract by one point
+        - if the player taking (together with his partner) is short of 1/2 point, he 
+          misses the contract by one point, on the other hand, if he is over by 1/2 point, 
+          he makes the contract by one point
         - for the score to be zero at the end of the game, points for the taker and his
           partner are split 2/3 for the taker and 1/3 for his partner assuming he has one,
           otherwise the taker gets 3/3 of the points
@@ -46,13 +46,13 @@
       row they have to be spaced by 3 cards dealt to a player
 
 #### Choosing a contract
-- if none of the players chooses a contract (passes) the cards are put together and 
+- if none of the players chooses a contract (passes), the cards are put together and 
   re-dealt by the next dealer (person to the right of the original dealer)
-- contracts can be outbidden by other players, but every player bids only once 
+- contracts can be out-bidden by other players, but every player bids only once 
 - starting from the person to the right of the dealer, continuing counter-clockwise 
   ending at the dealer
 - all contracts equal or below the current contract cannot be choosen anymore
-- if someone chooses a "guarde against the dog" this person is automatically the taker 
+- if someone chooses a "guard against the dog" this person is automatically the taker 
   as no one can outbid him anymore
 
 #### After choosing the contract (and _before the first trick?/before the aside?_)
@@ -65,11 +65,11 @@
 - the taker takes the cards into his hand and puts away the same number of cards into his 
   aside
 - depending on the contract (from lowest to highest):
-  - "small": normal behaviour
-  - "guard": normal behaviour
+  - "small": normal behavior
+  - "guard": normal behavior
   - "guard without the dog": the cards from the dog go automatically into the takers 
     aside, without anyone looking at them
-  - "guard against the dog": the cards from the dog go automatically into the Defences 
+  - "guard against the dog": the cards from the dog go automatically into the Defence's 
     points, without anyone looking at them
 - kings and trumps cannot be put into the aside, except if a trump has to be put into 
   the aside, but it then has to be shown to the Defence
