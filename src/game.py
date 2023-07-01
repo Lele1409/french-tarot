@@ -32,7 +32,7 @@ class Game:
 
         # VALIDATE PARAMETERS
         # PARAM PLAYERS: is limited to specific values as described by the following error message:
-        paramPlayersExceptionString = "Parameter players has to be a int in [3, 4, 5] or a list of Player objects"
+        paramPlayersExceptionString = "Parameter players has to be a integer in [3, 4, 5] or a list of Player objects"
         # If Players have to be created
         if type(players) is int:
             if players not in [3, 4, 5]:
@@ -96,6 +96,12 @@ class Game:
         # If wanted and possible, players can call a handful
         self.handfuls = [None] * self.playerCount
 
+        # To keep track of a trick's winner, who'll be the startingPlayer of a next trick
+        self.startingPlayer = None
+
+        # History of past tricks and current trick
+        self.tricks: List[list] = []
+
     @staticmethod
     def create_deck() -> list:  # TODO: memoization??
         """Return a list of the 78 cards: four suits, all trumps and the excuse"""
@@ -129,34 +135,30 @@ class Game:
 
         # Give each player starting from the one to the right of the dealer and then in a counter-clockwise order the
         # opportunity to announce a Chelem, only one player can announce a Chelem
-        i = self.dealer - 1
-        for _ in range(self.playerCount):
-            if i < 0:
-                i = self.playerCount - 1
-            if self.players[i].callChelem():
-                self.chelemPlayer = i
+        for i in range(self.playerCount):
+            currentPlayer = self.dealer - i - 1
+            if self.players[currentPlayer].callChelem():
+                self.chelemPlayer = currentPlayer
                 break
-            i -= 1
 
         # Let each player announce a handful starting from the one to the right of the dealer and then in a
         # counter-clockwise order, if
-        i = self.dealer - 1
-        for _ in range(self.playerCount):
-            if i < 0:
-                i = self.playerCount - 1
-            if handful := self.players[i].callHandful() is not None:
-                self.handfuls[i] = handful
-            i -= 1
+        for i in range(self.playerCount):
+            currentPlayer = self.dealer - i - 1
+            if handful := self.players[currentPlayer].callHandful() is not None:
+                self.handfuls[currentPlayer] = handful
 
+        # TODO: redo comment
         # Play tricks (param trick:int)  # TODO: first trick -> starting player to the right of the dealer or player who called chelem
         # n = (78 - dogSize) / nbPlayers = len(player.hand)
-        print('PLAYING TRICKS')
+        nTricks = (78 - self.dogSizes[self.playerCount]) / self.playerCount
+        for nTrick in range(nTricks):
+            self.playTrick(nTrick)
 
     def _deal(self):  # TODO: add start deal at right of dealer
         """Get a list of booleans. For every boolean value, if True a card is put into the dog if False three cards
         are given to the next player starting at the player next to the dealer"""
 
-        # TODO: one free line between initial docstring and other comments
         # The deck gets cut at some random place, but not closer to the ends of the deck than the size of a deal
         # to a player
         deckCutIndex = rd.randint(0 + Game.dealSizes[self.playerCount],
@@ -288,6 +290,48 @@ class Game:
         """Add cards to the aside for all players to see"""
 
         self.aside.extend(cards)
+
+    def playTrick(self, n: int) -> None:
+        """Let every player play a card, validating that the card can be played. Then give the won cards to the right
+        player"""
+
+        # Start a new trick in the game's history
+        self.tricks.append([])
+
+        # In the first trick, the startingPlayer for this trick is the person to the right of the dealer
+        # Exception if a player has called a Chelem, in that case, this player starts
+        if n == 0:
+            if self.chelemPlayer is None:
+                self.startingPlayer = self.dealer - 1
+            else:
+                self.startingPlayer = self.chelemPlayer
+
+        # Starting from the startingPlayer and in counter-clockwise order
+        for i in range(self.playerCount):
+            currentPlayer = self.startingPlayer - i
+
+            # Get the mainCard for the trick to determine which other cards can be played by the following players
+            mainCard: str = None
+            # Only works when the card has already been played, so after the first card
+            if i > 0:
+                # Get the first card from the n^th trick if it isn't the Excuse
+                if self.tricks[n][0] == 'EX':
+                    if i > 1:
+                        mainCard = self.tricks[n][1]
+                else:
+                    mainCard = self.tricks[n][0]
+
+            trumps = sorted([card for card in self.tricks[n] if 'T' in card])
+            try:
+                highestTrump = int(trumps[0][:-1])
+            except IndexError:
+                highestTrump = None
+
+            playedCard = self.players[currentPlayer].playCard(mainCard, highestTrump)
+            self.tricks[n].append(playedCard)
+
+        # Set a startingPlayer for the next trick
+        #the winner of the previous trick
 
     def end(self) -> tuple:  # TODO: export data for following game
         """Returns all information that is needed to start a new game with the already existing deck and players"""
@@ -483,6 +527,59 @@ class Player:
             return None
         else:
             return decision
+
+    def playCard(self, mainCard: str, highestTrump: int):
+        """Make the player choose one of the cards in his hand to play in the trick"""
+
+        # Define the question
+        question = "Which card do you want to play in this trick?"
+
+        # Base options are all the cards in the player's hand
+        options = self.hand.copy()
+
+        # If the first card of the trick has already been played, limit the options the player has according to
+        # this card
+        if mainCard is not None:
+            mainCardValue, mainCardType = mainCard[:-1], mainCard[-1]
+
+            # If the mainCard is part of a suit
+            if mainCardType in ['♤', '♡', '♧', '♢']:
+                # Check if the player has a card of the required suit in his hand
+                cardOfMainCardSuitInHand = [option for option in options if mainCardType in option]
+                # If this is the case, all cards of the same suit can be played, and no other card
+                if len(cardOfMainCardSuitInHand) > 0:
+                    options = cardOfMainCardSuitInHand
+                # If this isn't the case, the player has to play a trump
+                else:
+                    mainCardType = 'T'
+
+            # If the mainCard is a trump
+            if mainCardType == 'T':
+                # Check if the player has a trump over the current highest trump in his hand
+                trumpsOverHighestTrumpInHand = [option for option in options
+                                                if mainCardType in option
+                                                and option[:-1] < highestTrump]
+                # If this is the case, all trumps over the current highest trump can be played
+                if len(trumpsOverHighestTrumpInHand) > 0:
+                    options = trumpsOverHighestTrumpInHand
+                # If this isn't the case, the player has to play any other trump he has
+                else:
+                    # Check if the player has any trump in his hand
+                    trumpsInHand = [option for option in options if mainCardType in option]
+                    # If this is the case, all trumps can be played
+                    if len(trumpsInHand) > 0:
+                        options = trumpsInHand
+                    # If this isn't the case, the player has to play any other leftover card
+                    else:
+                        cardType = 'any'
+
+        # Always allow a player to play the excuse if he has it
+        if 'EX' in self.hand:
+            options.append('EX')
+
+        # Get the card the player wants to play
+        card = self._getDecision(question, options)
+        return card
 
 
 if __name__ == '__main__':
