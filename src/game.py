@@ -1,4 +1,5 @@
 import random as rd
+from typing import List
 from tarotExceptions import GameException, PlayerException
 
 # TODO: add a toggleable print function for more information when 'human' playing
@@ -18,10 +19,17 @@ class Game:
         4: 3,
         5: 3
     }
+    handfulSizes = {
+        3: (13, 15, 18),
+        4: (10, 13, 15),
+        5:  (8, 10, 13)
+    }
     # All the possible contracts
     contracts = ['pass', 'small', 'guard', 'guard w/o', 'guard against']
 
     def __init__(self, players=4, deck=None, matchPoints=None, lastDealer=None):
+        """Validate parameters and initialize variables"""
+
         # VALIDATE PARAMETERS
         # PARAM PLAYERS: is limited to specific values as described by the following error message:
         paramPlayersExceptionString = "Parameter players has to be a int in [3, 4, 5] or a list of Player objects"
@@ -29,13 +37,13 @@ class Game:
         if type(players) is int:
             if players not in [3, 4, 5]:
                 raise GameException(paramPlayersExceptionString)
-            self.players = [Player(name=f'Player {n}', strategy=MODE) for n in range(players)]
+            self.players: List[Player] = [Player(name=f'Player {n}', strategy=MODE) for n in range(players)]
 
         # If the Players already existed
         elif type(players) is list:
             if any([player is not Player for player in players]) or len(players) not in [3, 4, 5]:
                 raise GameException(paramPlayersExceptionString)
-            self.players = players
+            self.players: List[Player] = players
         else:
             raise GameException(paramPlayersExceptionString)
 
@@ -79,15 +87,19 @@ class Game:
         self.highestContract = 'pass'
         self.playerTaking = None
 
-        # Five player game, the taker calls for a teammate
+        # In a game with five players, the taker calls for a teammate
         self.calledCard = None
 
         # If exists, player who called a chelem:
         self.chelemPlayer = None
 
+        # If wanted and possible, players can call a handful
+        self.handfuls = [None] * self.playerCount
+
     @staticmethod
     def create_deck() -> list:  # TODO: memoization??
         """Return a list of the 78 cards: four suits, all trumps and the excuse"""
+
         suits = ['♤', '♡', '♧', '♢']
         values = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'C', 'Q', 'K']
 
@@ -124,17 +136,25 @@ class Game:
                 break
             i -= 1
 
-        # Let each player announce a handful
+        # Let each player announce a handful starting from the one to the right of the dealer and then in a
+        # counter-clockwise order, if
+        i = self.dealer - 1
+        for _ in range(self.playerCount):
+            if i < 0:
+                i = self.playerCount - 1
+            if handful := self.players[i].callHandful() is not None:
+                self.handfuls[i] = handful
+            i -= 1
 
-
-        # Play tricks (param trick:int)  # TODO: starting player to the right of the dealer or player who called chelem
-        # n = (78 - sizeofdog) / nbPlayers = len(player.hand)
+        # Play tricks (param trick:int)  # TODO: first trick -> starting player to the right of the dealer or player who called chelem
+        # n = (78 - dogSize) / nbPlayers = len(player.hand)
         print('PLAYING TRICKS')
 
     def _deal(self):  # TODO: add start deal at right of dealer
         """Get a list of booleans. For every boolean value, if True a card is put into the dog if False three cards
         are given to the next player starting at the player next to the dealer"""
 
+        # TODO: one free line between initial docstring and other comments
         # The deck gets cut at some random place, but not closer to the ends of the deck than the size of a deal
         # to a player
         deckCutIndex = rd.randint(0 + Game.dealSizes[self.playerCount],
@@ -203,7 +223,7 @@ class Game:
 
     def _awaitContracts(self) -> None:
         # For every player
-        for i in range(self.playerCount):
+        for i in range(self.playerCount):  # TODO: compare the two methods of going around the table
             # Starting from the player to the right of the dealer, and then counter-clockwise get the contract chosen by
             # each player
             currentPlayer = self.dealer - i - 1
@@ -289,7 +309,7 @@ class Player:
     def joinGame(self, gameObject: Game):
         self.game = gameObject
 
-    def _getDecision(self, question: str, options: [str]) -> str:
+    def _getDecision(self, question: str, options: List[str]) -> str:
         # Validate the format of the possible options
         if any([type(element) is not str for element in options]) or len(options) == 0:
             raise PlayerException("Parameter 'options' in 'decide' only takes a list of strings")
@@ -401,6 +421,35 @@ class Player:
             return True
         else:
             return False
+
+    def callHandful(self):
+        # Get the number of trumps in the player's hand and how many are needed for calling the handfuls
+        trumpsInHand = [card for card in self.hand if 'T' in card]
+        trumpsNeededForHandful = Game.handfulSizes[self.game.playerCount]
+
+        question = "Do you want to call a handful?"
+        options = ['Simple handful', 'Double handful', 'Triple Handful']
+
+        # Eliminate the options that aren't possible
+        if len(trumpsInHand) >= trumpsNeededForHandful[0]:
+            options = options[0:1]
+        elif len(trumpsInHand) >= trumpsNeededForHandful[1]:
+            options = options[:2]
+        elif len(trumpsInHand) >= trumpsNeededForHandful[2]:
+            options = options
+        else:
+            return None
+
+        # Add the possibility not to call the handful
+        options.extend("Don't call handful")
+
+        decision = self._getDecision(question, options)
+
+        # If the player decides not to call, the handful returns the same as if it wasn't possible
+        if decision == "Don't call handful":
+            return None
+        else:
+            return decision
 
 
 if __name__ == '__main__':
