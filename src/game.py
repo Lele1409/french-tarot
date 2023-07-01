@@ -138,7 +138,9 @@ class Game:
         for i in range(self.playerCount):
             currentPlayer = self.dealer - i - 1
             if self.players[currentPlayer].callChelem():
-                self.chelemPlayer = currentPlayer
+                # Get the position of the player who called the Chelem
+                self.chelemPlayer = self.players.index(self.players[currentPlayer])
+                # Only the first one to announce a Chelem can do it, no other player after
                 break
 
         # Let each player announce a handful starting from the one to the right of the dealer and then in a
@@ -151,7 +153,7 @@ class Game:
         # TODO: redo comment
         # Play tricks (param trick:int)  # TODO: first trick -> starting player to the right of the dealer or player who called chelem
         # n = (78 - dogSize) / nbPlayers = len(player.hand)
-        nTricks = (78 - self.dogSizes[self.playerCount]) / self.playerCount
+        nTricks = int((78 - self.dogSizes[self.playerCount]) / self.playerCount)
         for nTrick in range(nTricks):
             self.playTrick(nTrick)
 
@@ -321,6 +323,7 @@ class Game:
                 else:
                     mainCard = self.tricks[n][0]
 
+            # If existing, find the highest trump played in the current trick
             trumps = sorted([card for card in self.tricks[n] if 'T' in card])
             try:
                 highestTrump = int(trumps[0][:-1])
@@ -331,7 +334,7 @@ class Game:
             self.tricks[n].append(playedCard)
 
         # Set a startingPlayer for the next trick
-        #the winner of the previous trick
+        # TODO: the winner of the previous trick
 
     def end(self) -> tuple:  # TODO: export data for following game
         """Returns all information that is needed to start a new game with the already existing deck and players"""
@@ -555,10 +558,16 @@ class Player:
 
             # If the mainCard is a trump
             if mainCardType == 'T':
-                # Check if the player has a trump over the current highest trump in his hand
-                trumpsOverHighestTrumpInHand = [option for option in options
-                                                if mainCardType in option
-                                                and option[:-1] < highestTrump]
+                # If any trumps have already been played in the trick
+                if highestTrump is not None:
+                    # Check if the player has a trump over the current highest trump in his hand
+                    trumpsOverHighestTrumpInHand = [option for option in options
+                                                    if mainCardType in option
+                                                    and int(option[:-1]) < highestTrump]
+                # Else, there cannot be any trumps over a non-existing highestTrump, so we roll over to the next case,
+                # where any trump can be played
+                else:
+                    trumpsOverHighestTrumpInHand = []
                 # If this is the case, all trumps over the current highest trump can be played
                 if len(trumpsOverHighestTrumpInHand) > 0:
                     options = trumpsOverHighestTrumpInHand
