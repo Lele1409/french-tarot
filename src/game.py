@@ -62,7 +62,7 @@ class Game:
 
         # PARAM LASTDEALER: can be set from previous game, making the dealer change by one player
         if lastDealer is None:
-            self.dealer = 0
+            self.dealer = rd.randint(0, self.playerCount - 1)
         elif type(lastDealer) is int and lastDealer in range(0, self.playerCount + 1):
             self.dealer = lastDealer
             self._nextDealer()
@@ -73,6 +73,7 @@ class Game:
         # A list containing the cards in the dog
         self._dog = []
         self.dog = []  # Cards transferred from self._dog to self.dog if all players know the cards that were in the dog
+        self.aside = []  # If a player has to show a card that he puts into his aside
 
         # Information about the contract chosen by the taker
         self.highestContract = 'pass'
@@ -244,6 +245,9 @@ class Game:
         elif self.highestContract == Game.contracts[4]:
             self.guardAgainstCards = self._dog
 
+    def showCardsInAside(self, cards: list):
+        self.aside.extend(cards)
+
     def end(self) -> tuple:  # TODO: export data for following game
         # Returns all information that is needed to start a new game with the already existing deck and players
         pass
@@ -266,7 +270,7 @@ class Player:
 
         self.cardsWon = []
 
-        self.game = None
+        self.game: Game = None
 
         self.calledCard = None
 
@@ -324,16 +328,28 @@ class Player:
         # Kings cannot be put into the aside
         for king in [option for option in options if 'K' in option]:
             options.remove(king)
-        # If there are fewer cards that aren't trumps then the number of cards missing in the aside
+
+        # Compare the number of cards missing in the aside to the number no not trump cards
         missingInAsideCount = Game.dogSizes[self.game.playerCount] - len(self.cardsWon)
-        if len([option for option in options if 'T' not in option]) >= missingInAsideCount:
-            for trump in [option for option in options if 'T' in option]:
+        notTrumpsInHand = [option for option in options if 'T' not in option]
+
+        # If there are fewer cards that aren't trumps then the number of cards missing in the aside
+        if len(notTrumpsInHand) >= missingInAsideCount:
+            # Remove all the trumps from the options
+            trumpsInHand = [option for option in options if 'T' in option]
+            for trump in trumpsInHand:
                 options.remove(trump)
+
         # The excuse cannot be put into the aside
         if 'EX' in options:
             options.remove('EX')
 
+        # Get decision from player
         card = self._getDecision(question, options)
+
+        # If a player decides to put a trump into his aside, he has to show it to the other players
+        self.game.showCardsInAside([card])
+
         self.cardsWon.append(self.hand.pop(self.hand.index(card)))
 
     def chooseContract(self, highestContract='pass') -> str:
@@ -408,5 +424,5 @@ if __name__ == '__main__':
         singleTime = time.perf_counter_ns() - start
         print(singleTime, games)
         games += 1
-    TOTALTIME = TOTALSTART - time.perf_counter_ns()
+    TOTALTIME = time.perf_counter_ns() - TOTALSTART
     print('total:', TOTALTIME, 'average:', TOTALTIME/tests)
