@@ -5,7 +5,7 @@ import time
 MODE = 'random'
 
 
-class Game:  # TODO: in a 3 player game, cards are dealt four at a time
+class Game:
     # Information about the number of cards in the dog
     dogSizes = {
         3: 6,
@@ -78,8 +78,11 @@ class Game:  # TODO: in a 3 player game, cards are dealt four at a time
         self.highestContract = 'pass'
         self.playerTaking = None
 
+        # Five player game, the taker calls for a teammate
+        self.calledCard = None
+
     @staticmethod
-    def create_deck() -> list:
+    def create_deck() -> list:  # TODO: memoization??
         """Return a list of the 78 cards: four suits, all trumps and the excuse"""
         suits = ['♤', '♡', '♧', '♢']
         values = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'C', 'Q', 'K']
@@ -100,14 +103,23 @@ class Game:  # TODO: in a 3 player game, cards are dealt four at a time
             self._deal()
             self._awaitContracts()
 
+        if self.playerCount == 5:
+            self.calledCard = self.players[self.playerTaking].callPlayer()
+
         # Give the dog to the player that is taking or to the defendants
         self._convertDogToAside()
 
-        # Give each player the opportunity to announce a Chelem
-        # TODO: Chelem
+        # Give each player starting from the one to the right of the dealer and then in a counter-clockwise order the
+        # opportunity to announce a Chelem
+        i = self.dealer
+        for _ in range(self.playerCount):
+            if i < 0:
+                i = self.playerCount - 1
+            self.players[i].callChelem()
+            i -= 1
 
         # Play tricks (param trick:int)
-        print('PLAYING FIRST TRICK')
+        print('PLAYING TRICKS')
 
     def _deal(self):  # TODO: add start deal at right of dealer
         """Get a list of booleans. For every boolean value, if True a card is put into the dog if False three cards
@@ -122,7 +134,7 @@ class Game:  # TODO: in a 3 player game, cards are dealt four at a time
         # List of booleans specifying the deal type
         deals = self._getDealOrder()
 
-        nextPlayer = 0
+        nextPlayer = self.dealer
         for deal in deals:
             if deal == True:  # NOQA | if the card is for the dog
                 # Add the first card of the deck to the dog
@@ -202,25 +214,25 @@ class Game:  # TODO: in a 3 player game, cards are dealt four at a time
 
     def _convertDogToAside(self) -> None:
         """Transfer the cards of the dog to whatever player should get it"""
-        playerTaking = self.players[self.playerTaking]
+        player = self.players[self.playerTaking]
 
         # If the taker takes with a 'small' or a 'guard' contract, he gets the cards into his hand and has to put back
         # the same number of cards into his aside (same as Player.cardsWon since the cards are part of the players final
         # points)
         if self.highestContract in Game.contracts[1:3]:
-            playerTaking.addCardsToHand(self._dog)
+            player.addCardsToHand(self._dog)
 
             # The cards are shown to the other players (not the case if 'guard w/o' or 'guard against')
             self.dog = self._dog
             self._dog = []
 
             for _ in range(Game.dogSizes[self.playerCount]):
-                playerTaking.putCardInAside()
+                player.putCardInAside()
 
         # In case the contract is a 'guard w/o' the player taking takes the card from the dog without looking at
         # them
         elif self.highestContract == Game.contracts[3]:
-            playerTaking.takeCardsWon(self._dog)
+            player.takeCardsWon(self._dog)
 
         # In case the contract is a 'guard against' the points of the dog are given to the Defence at the end of the
         # game
@@ -246,8 +258,12 @@ class Player:
 
         # INITIALIZE VARIABLES
         self.hand = []
+
         self.cardsWon = []
+
         self.game = None
+
+        self.calledCard = None
 
     def rename(self, name) -> None:
         self.name = str(name)
@@ -257,7 +273,7 @@ class Player:
 
     def _getDecision(self, question: str, options: [str]) -> str:
         # Validate the format of the possible options
-        if any([type(element) is not str for element in options]):
+        if any([type(element) is not str for element in options]) or len(options) == 0:
             raise PlayerException("Parameter 'options' in 'decide' only takes a list of strings")
 
         # Show the question to the user if the user is a human player and return the option chosen by the player
@@ -315,7 +331,8 @@ class Player:
         card = self._getDecision(question, options)
         self.cardsWon.append(self.hand.pop(self.hand.index(card)))
 
-    def chooseContract(self, highestContract='pass'):
+    def chooseContract(self, highestContract='pass') -> str:
+        """Let the player choose one of the available contracts, if no contract is left available"""
         highestContractIndex = Game.contracts.index(highestContract)
         leftoverOptions = ['pass'] + Game.contracts[highestContractIndex + 1:]
         if len(leftoverOptions) > 1:
@@ -323,6 +340,32 @@ class Player:
             return contract
         else:
             return 'pass'
+
+    def callPlayer(self) -> str:
+        """In the five-player variant of the game, the caller has to call a king before taking the dog. The player who
+        holds that card now plays with the caller in a team."""
+        question = "Call your partner"
+
+        options = []
+        value = ['K', 'Q', 'C', 'J']
+
+        # Can be called:
+        #  - Any king (even if the player has this king himself)
+        options.extend([card for card in Game.create_deck() if 'K' in card])
+
+        #  - If a player has all Kings, he can call a Queen. The same goes for the Queen, the Cavalryman and the Jack
+        i = 0
+        while len([card for card in self.hand if value[i] in card]) == 4 and i < 4:
+            options.extend([card for card in self.hand if value[i] in card])
+            i += 1
+
+        print(options)
+
+        calledCard = self._getDecision(question, options)
+        return calledCard
+
+    def callChelem(self):
+        self._getDecision("Are you calling a Chelem?", ['Chelem', 'no Chelem'])
 
 
 class GameException(Exception):
@@ -334,20 +377,25 @@ class PlayerException(Exception):
 
 
 if __name__ == '__main__':
-    game = Game(3)
-    game.play()
-    print()
-    game2 = Game(4, lastDealer=3)
-    game2.play()
-    print()
-    game3 = Game(5)
-    game3.play()
+    # game = Game(3)
+    # game.play()
+    # print()
+    # game2 = Game(4, lastDealer=3)
+    # game2.play()
+    # print()
+    # game3 = Game(5)
+    # game3.play()
 
-    exit()
+    # exit()
     games = 0  # NOQA
-    while n < 1000000:
+    tests = 1e7
+    TOTALSTART = time.perf_counter_ns()
+    while games < tests:
         start = time.perf_counter_ns()
         game = Game(rd.randint(3, 5), lastDealer=rd.randint(0, 3))
-        total = time.perf_counter_ns() - start
-        print(total, games)
+        game.play()
+        singleTime = time.perf_counter_ns() - start
+        print(singleTime, games)
         games += 1
+    TOTALTIME = TOTALSTART - time.perf_counter_ns()
+    print('total:', TOTALTIME, 'average:', TOTALTIME/tests)
