@@ -81,6 +81,9 @@ class Game:
         # Five player game, the taker calls for a teammate
         self.calledCard = None
 
+        # If exists, player who called a chelem:
+        self.chelemPlayer = None
+
     @staticmethod
     def create_deck() -> list:  # TODO: memoization??
         """Return a list of the 78 cards: four suits, all trumps and the excuse"""
@@ -110,12 +113,14 @@ class Game:
         self._convertDogToAside()
 
         # Give each player starting from the one to the right of the dealer and then in a counter-clockwise order the
-        # opportunity to announce a Chelem
+        # opportunity to announce a Chelem, only one player can announce a Chelem
         i = self.dealer
         for _ in range(self.playerCount):
             if i < 0:
                 i = self.playerCount - 1
-            self.players[i].callChelem()
+            if self.players[i].callChelem():
+                self.chelemPlayer = i
+                break
             i -= 1
 
         # Play tricks (param trick:int)
@@ -300,7 +305,7 @@ class Player:
     def _handSortKey(self, s: str) -> str:
         return Game.create_deck().index(s)
 
-    def clearHand(self) -> list:
+    def clearHand(self) -> [str]:
         """Empties a player's hand and returns the cards that were in it"""
         oldHand, self.hand = self.hand.copy(), []
         return oldHand
@@ -364,8 +369,14 @@ class Player:
         calledCard = self._getDecision(question, options)
         return calledCard
 
-    def callChelem(self):
-        self._getDecision("Are you calling a Chelem?", ['Chelem', 'no Chelem'])
+    def callChelem(self) -> bool:
+        """Let the player decide if he wants to try a Chelem or not"""
+        chelemQuestion = "Are you calling a Chelem?"
+        chelemOptions = ['Chelem', 'no Chelem']
+        if self._getDecision(chelemQuestion, chelemOptions) == 'Chelem':
+            return True
+        else:
+            return False
 
 
 class GameException(Exception):
