@@ -113,6 +113,8 @@ class Game:
         return deck
 
     def play(self):
+        """Start the execution of the different phases in the game"""
+
         # Make the players choose a contract after the cards are dealt to them
         # If no contract is chosen, start over by re-dealing
         while self.highestContract == 'pass':
@@ -217,11 +219,16 @@ class Game:
         return deals
 
     def _nextDealer(self) -> None:
+        """Change the dealer when re-dealing the cards and any other action starting at a position relative to the
+        dealer"""
+
         self.dealer -= 1
         if self.dealer < 0:
             self.dealer = self.playerCount - 1
 
     def _awaitContracts(self) -> None:
+        """Get the desired contract from every player in the game"""
+
         # For every player
         for i in range(self.playerCount):  # TODO: compare the two methods of going around the table
             # Starting from the player to the right of the dealer, and then counter-clockwise get the contract chosen by
@@ -238,6 +245,8 @@ class Game:
             self._resetDeck()
 
     def _resetDeck(self):
+        """Take all the cards back from the player's hands and the dog and put them back together to form a new deck"""
+
         # For every player
         for i in range(self.playerCount):
             # Reset the player's hands and get back the cards in the following order:
@@ -249,6 +258,7 @@ class Game:
 
     def _convertDogToAside(self) -> None:
         """Transfer the cards of the dog to whatever player should get it"""
+
         player = self.players[self.playerTaking]
 
         # If the taker takes with a 'small' or a 'guard' contract, he gets the cards into his hand and has to put back
@@ -275,15 +285,19 @@ class Game:
             self.guardAgainstCards = self._dog
 
     def showCardsInAside(self, cards: list):
+        """Add cards to the aside for all players to see"""
+
         self.aside.extend(cards)
 
     def end(self) -> tuple:  # TODO: export data for following game
-        # Returns all information that is needed to start a new game with the already existing deck and players
+        """Returns all information that is needed to start a new game with the already existing deck and players"""
         pass
 
 
 class Player:
     def __init__(self, name: str, strategy: str):
+        """Validate parameters and initialize variables"""
+
         # VALIDATE PARAMETERS
         # A name to easily identify the players or the order in which they sit in
         self.name = str(name)
@@ -304,12 +318,18 @@ class Player:
         self.calledCard = None
 
     def rename(self, name) -> None:
+        """Change the name of a player"""
+
         self.name = str(name)
 
     def joinGame(self, gameObject: Game):
+        """Link a Game object to the player"""
+
         self.game = gameObject
 
     def _getDecision(self, question: str, options: List[str]) -> str:
+        """Given an answer and set of possible options, a player has to decide which option to choose."""
+
         # Validate the format of the possible options
         if any([type(element) is not str for element in options]) or len(options) == 0:
             raise PlayerException("Parameter 'options' in 'decide' only takes a list of strings")
@@ -331,24 +351,32 @@ class Player:
             return rd.choice(options)
 
     def addCardsToHand(self, cards: list, sort=False) -> None:
+        """Add cards to a player's hand"""
+
         self.hand.extend(cards)
         if sort:
             self.hand.sort(key=self._handSortKey)
 
     def _handSortKey(self, s: str) -> str:
+        """Allows sorting of the cards in the same order as they were dealt"""
+
         return Game.create_deck().index(s)
 
     def clearHand(self) -> [str]:
         """Empties a player's hand and returns the cards that were in it"""
+
         oldHand, self.hand = self.hand.copy(), []
         return oldHand
 
     def takeCardsWon(self, cards: list):
+        """Transfers the cards into the stack of cards won by the player"""
+
         self.cardsWon.extend(cards)
 
     def putCardInAside(self) -> None:
         """Ask the player to choose which cards we would like to transfer from his hand to the aside, keeping in mind
          the limitations when doing so"""
+
         # Define the question
         question = f"Choose a card in your hand to put into your aside."
 
@@ -383,6 +411,7 @@ class Player:
 
     def chooseContract(self) -> str:
         """Let the player choose one of the available contracts, if no contract is left available"""
+
         highestContract = self.game.highestContract
         highestContractIndex = Game.contracts.index(highestContract)
         leftoverOptions = ['pass'] + Game.contracts[highestContractIndex + 1:]
@@ -395,6 +424,7 @@ class Player:
     def callPlayer(self) -> str:
         """In the five-player variant of the game, the caller has to call a king before taking the dog. The player who
         holds that card now plays with the caller in a team."""
+
         question = "Please call a card, whoever has this card will be your partner."
 
         options = []
@@ -415,6 +445,7 @@ class Player:
 
     def callChelem(self) -> bool:
         """Let the player decide if he wants to try a Chelem or not"""
+
         chelemQuestion = "Are you calling a Chelem?"
         chelemOptions = ['Chelem', 'no Chelem']
         if self._getDecision(chelemQuestion, chelemOptions) == 'Chelem':
@@ -423,6 +454,8 @@ class Player:
             return False
 
     def callHandful(self):
+        """Let the player decide (if possible) whether they want to announce a handful"""
+
         # Get the number of trumps in the player's hand and how many are needed for calling the handfuls
         trumpsInHand = [card for card in self.hand if 'T' in card]
         trumpsNeededForHandful = Game.handfulSizes[self.game.playerCount]
