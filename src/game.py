@@ -1,5 +1,5 @@
 import random as rd
-import time
+from tarotExceptions import GameException, PlayerException
 
 # TODO: add a toggleable print function for more information when 'human' playing
 MODE = 'random'
@@ -115,7 +115,7 @@ class Game:
 
         # Give each player starting from the one to the right of the dealer and then in a counter-clockwise order the
         # opportunity to announce a Chelem, only one player can announce a Chelem
-        i = self.dealer
+        i = self.dealer - 1
         for _ in range(self.playerCount):
             if i < 0:
                 i = self.playerCount - 1
@@ -124,7 +124,11 @@ class Game:
                 break
             i -= 1
 
-        # Play tricks (param trick:int)
+        # Let each player announce a handful
+
+
+        # Play tricks (param trick:int)  # TODO: starting player to the right of the dealer or player who called chelem
+        # n = (78 - sizeofdog) / nbPlayers = len(player.hand)
         print('PLAYING TRICKS')
 
     def _deal(self):  # TODO: add start deal at right of dealer
@@ -140,20 +144,25 @@ class Game:
         # List of booleans specifying the deal type
         deals = self._getDealOrder()
 
-        nextPlayer = self.dealer
+        nextPlayer = self.dealer - 1
         for deal in deals:
-            if deal == True:  # NOQA | if the card is for the dog
+            # If a deal equals to True, it is meant to go into the dog
+            if deal == True:  # NOQA
                 # Add the first card of the deck to the dog
                 self._dog.append(self.deck.pop(0))
+
+            # Else if a deal equals to False, it is meant to be dealt to a player
             else:
+                # If the index goes too far, rollover to the other end
+                if nextPlayer < 0:
+                    nextPlayer = self.playerCount - 1
+
                 # Give the three first cards of the deck to the next player
                 cardsDealt = [self.deck.pop(0) for _ in range(Game.dealSizes[self.playerCount])]
                 self.players[nextPlayer].addCardsToHand(cardsDealt, sort=False)
 
                 # Set the nextPlayer to what would be the player to the right of the current player
                 nextPlayer -= 1
-                if nextPlayer < 0:
-                    nextPlayer = self.playerCount - 1
 
         # Repeat this function recursively until no player gets a hand containing: only the first trump ('1T') and not
         # the excuse ('EX')
@@ -198,7 +207,7 @@ class Game:
             # Starting from the player to the right of the dealer, and then counter-clockwise get the contract chosen by
             # each player
             currentPlayer = self.dealer - i - 1
-            chosenContract = self.players[currentPlayer].chooseContract(highestContract=self.highestContract)
+            chosenContract = self.players[currentPlayer].chooseContract()
             # Update the instance fields if the chosen contract is higher than the one highest before
             if chosenContract != 'pass':
                 self.highestContract = chosenContract
@@ -352,8 +361,9 @@ class Player:
 
         self.cardsWon.append(self.hand.pop(self.hand.index(card)))
 
-    def chooseContract(self, highestContract='pass') -> str:
+    def chooseContract(self) -> str:
         """Let the player choose one of the available contracts, if no contract is left available"""
+        highestContract = self.game.highestContract
         highestContractIndex = Game.contracts.index(highestContract)
         leftoverOptions = ['pass'] + Game.contracts[highestContractIndex + 1:]
         if len(leftoverOptions) > 1:
@@ -365,10 +375,9 @@ class Player:
     def callPlayer(self) -> str:
         """In the five-player variant of the game, the caller has to call a king before taking the dog. The player who
         holds that card now plays with the caller in a team."""
-        question = "Call your partner"
+        question = "Please call a card, whoever has this card will be your partner."
 
         options = []
-        value = ['K', 'Q', 'C', 'J']
 
         # Can be called:
         #  - Any king (even if the player has this king himself)
@@ -376,11 +385,10 @@ class Player:
 
         #  - If a player has all Kings, he can call a Queen. The same goes for the Queen, the Cavalryman and the Jack
         i = 0
+        value = ['K', 'Q', 'C', 'J']
         while len([card for card in self.hand if value[i] in card]) == 4 and i < 4:
             options.extend([card for card in self.hand if value[i] in card])
             i += 1
-
-        print(options)
 
         calledCard = self._getDecision(question, options)
         return calledCard
@@ -395,15 +403,8 @@ class Player:
             return False
 
 
-class GameException(Exception):
-    """Class for errors"""
-
-
-class PlayerException(Exception):
-    """Class for errors"""
-
-
 if __name__ == '__main__':
+    import time
     # game = Game(3)
     # game.play()
     # print()
