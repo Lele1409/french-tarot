@@ -116,8 +116,9 @@
   (multiplied by the contracts multiplier _n_ in {1, 2, 4, 6}) plus 25 points make up 
   the points of the taker, them being negative, zero or positive
 - To the points of the takers, you have to add or remove points for the handfuls (20, 30 
-  or 40 points), depending on who won the last trick and if it contained the Petit adding 
-  or deduct 10 multiplied by _n_
+  or 40 points)
+- depending on who won the last trick, and if it contained the Petit add or remove, 10 
+  points, multiplied by _n_
 - Add points for a possible Chelem 
 - The defendants each get this sum
 - Those points then have to be multiplied by 3, the number of players in the Defence, 
