@@ -1,10 +1,14 @@
 import src.game
+import src.utils
 import time
 import random as rd
 
 
 def testsAfterPlaying(game):
-    pass
+    nCards = 0
+    for n in range(len(game.players)):
+        nCards += len(game.players[n].cardsWon)
+    assert nCards == 78, print(nCards)
 
 
 if __name__ == '__main__':
@@ -21,6 +25,7 @@ if __name__ == '__main__':
         singleTime = time.perf_counter_ns() - start  # Single test performance timer end calc
         print(singleTime, GAMES)
 
+        src.utils.printAllGameFields(game)
         # Run tests
         testsAfterPlaying(game)
 
