@@ -22,7 +22,7 @@
         - Before touching the dog, the taker calls a king (if he has all four he can call
           a queen, the same goes for the queen or the knight); he can call himself
         - The first trick cannot be started with a card of the suit of the king called
-        - handfuls, double handfuls and triple handful respectively need 8, 10 and 13 
+        - Handfuls, double handfuls and triple handful respectively need 8, 10 and 13 
           trumps
         - If the player taking (together with his partner) is short of 1/2 point, he 
           misses the contract by one point, on the other hand, if he is over by 1/2 point, 
@@ -86,11 +86,12 @@
 
 #### Any trick
 - A trick is played counter-clockwise
-- If the first card played is a trump following players have to play a trump of higher 
-  value than the highest value trump already played in the trick if this is not 
+- If the first card played is of a suit, other players have to play any other card of the
+  same suit
+- If the first card played is a trump following players have to play a trump of higher
+  value than the highest value trump already played in the trick if this is not
   possible, a lower value trump has to be played
-- If a suit is played, other players have to play any other card of the same suit
-- If a player cannot play the suit demanded he has to play a trump, if the player 
+- If a player cannot play the suit required he has to play a trump, if the player 
   before him played a trump too, this trump will need to be of higher value than the last
 - If a player has no card of the given suit nor a trump, any other card can be played
 - If the first card of the trick is the Excuse, the determining card for the trick is 
