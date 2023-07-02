@@ -16,6 +16,7 @@ if __name__ == '__main__':
     # Set execution mode to random
     src.game.MODE = 'random'
 
+    GAMES = 0
     while True:
         start = time.perf_counter_ns()  # Single test performance timer start
 
@@ -32,3 +33,5 @@ if __name__ == '__main__':
 
         # Run tests
         testsAfterPlaying(game)
+
+        GAMES += 1
