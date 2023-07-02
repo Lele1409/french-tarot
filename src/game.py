@@ -122,7 +122,7 @@ class Game:
         self.owsExcuseCard: int = None
 
     @staticmethod
-    def create_deck() -> list:  # TODO: memoization??
+    def create_deck() -> list:
         """Return a list of the 78 cards: four suits, all trumps and the excuse"""
 
         suits = ['♤', '♡', '♧', '♢']
@@ -172,11 +172,7 @@ class Game:
         # In a game there are as many tricks left to play, then there are cards in a player's hand
         # Play the number of tricks required
         for nTrick in range(self.nTricks):
-            print('next trick')
             self._playTrick(nTrick)
-
-        for player in self.players:
-            print("END", "player:", player.name, player.cardsWon)
 
     def _deal(self):
         """Get a list of booleans. For every boolean value, if True a card is put into the dog if False three cards
@@ -522,8 +518,6 @@ class Player:
     def takeCardsWon(self, cards: list):
         """Transfers the cards into the stack of cards won by the player"""
 
-        if 'EX' in cards:
-            print("HEY!! EX")
         self.cardsWon.extend(cards)
 
     def putCardInAside(self) -> None:
