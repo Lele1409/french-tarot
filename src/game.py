@@ -1,10 +1,10 @@
 import random as rd
 from typing import List
-from tarotExceptions import GameException, PlayerException
+from src.tarotExceptions import GameException, PlayerException
 
 # TODO: add a toggleable print function for more information when 'human' playing
-# TODO: utils function for x.pop(x.index(y)
-MODE = 'random'
+# Set execution mode
+MODE = 'human'
 
 
 class Game:
@@ -36,7 +36,7 @@ class Game:
     contracts = ['pass', 'small', 'guard', 'guard w/o', 'guard against']
 
     def __init__(self, players=4, deck=None, matchPoints=None, lastDealer=None):
-        """Validate parameters and initialize variables"""  # TODO: initial docstring describes class not initializer
+        """A class for simulating a game. Can be started with its play() method."""
 
         # VALIDATE PARAMETERS
         # PARAM PLAYERS: is limited to specific values as described by the following error message:
@@ -443,7 +443,7 @@ class Game:
 
 class Player:
     def __init__(self, name: str, strategy: str):
-        """Validate parameters and initialize variables"""
+        """An object holding data about a player and simulating a player's actions"""
 
         # VALIDATE PARAMETERS
         # A name to easily identify the players or the order in which they sit in
@@ -549,13 +549,15 @@ class Player:
             for trump in trumpsInHand:
                 options.remove(trump)
 
+        # Sort options in deck order
+        options.sort(key=self._handSortKey)
+
         # Get decision from player
         card = self._getDecision(question, options)
 
         # If a player decides to put a trump into his aside, he has to show it to the other players
         if 'T' in card:
-            self.game.showCards(self.game.players.index(self),
-                                [card])
+            self.game.showCards(self.game.players.index(self), [card])
 
         self.cardsWon.append(self.hand.pop(self.hand.index(card)))
 
@@ -589,6 +591,9 @@ class Player:
         while len([card for card in self.hand if value[i] in card]) == 4 and i < 4:
             options.extend([card for card in self.hand if value[i] in card])
             i += 1
+
+        # Sort options in deck order
+        options.sort(key=self._handSortKey)
 
         calledCard = self._getDecision(question, options)
         return calledCard
@@ -658,10 +663,10 @@ class Player:
             # If the mainCard is part of a suit
             if mainCardType in ['♤', '♡', '♧', '♢']:
                 # Check if the player has a card of the required suit in his hand
-                cardOfMainCardSuitInHand = [option for option in options if mainCardType in option]
+                cardsOfMainCardSuitInHand = [option for option in options if mainCardType in option]
                 # If this is the case, all cards of the same suit can be played, and no other card
-                if len(cardOfMainCardSuitInHand) > 0:
-                    options = cardOfMainCardSuitInHand
+                if len(cardsOfMainCardSuitInHand) > 0:
+                    options = cardsOfMainCardSuitInHand
                 # If this isn't the case, the player has to play a trump
                 else:
                     mainCardType = 'T'
@@ -673,11 +678,12 @@ class Player:
                     # Check if the player has a trump over the current highest trump in his hand
                     trumpsOverHighestTrumpInHand = [option for option in options
                                                     if mainCardType in option
-                                                    and int(option[:-1]) < highestTrump]
+                                                    and int(option[:-1]) > highestTrump]
                 # Else, there cannot be any trumps over a non-existing highestTrump, so we roll over to the next case,
                 # where any trump can be played
                 else:
                     trumpsOverHighestTrumpInHand = []
+
                 # If this is the case, all trumps over the current highest trump can be played
                 if len(trumpsOverHighestTrumpInHand) > 0:
                     options = trumpsOverHighestTrumpInHand
@@ -695,9 +701,12 @@ class Player:
         if 'EX' in self.hand:
             options.append('EX')
 
+        # Sort options in deck order
+        options.sort(key=self._handSortKey)
+
         # Get the card the player plays
         card = self._getDecision(question, options)
-        self.hand.pop(self.hand.index(card))
+        self.hand.remove(card)
         return card
 
 
