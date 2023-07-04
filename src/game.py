@@ -1,13 +1,17 @@
+import math
 import random as rd
 from typing import List
 from src.tarotExceptions import GameException, PlayerException
+from src.utils import printAllGameFields as debug, Memoize  # NOQA
 
 # TODO: add a toggleable print function for more information when 'human' playing
 # Set execution mode
-MODE = 'human'
+MODE = 'random'
 
 
 class Game:
+    # Suits for the cards
+    suits = ['♤', '♡', '♧', '♢']
     # Information about the number of cards in the dog
     dogSizes = {
         3: 6,
@@ -26,6 +30,11 @@ class Game:
         4: (10, 13, 15),
         5: (8, 10, 13)
     }
+    handfulValues = {
+        'Simple handful': 20,
+        'Double handful': 30,
+        'Triple Handful': 40
+    }
     # Every card of a suit paired of an integer in increasing order
     cardNameToValue = {
         "1": 1, "2": 2, "3": 3, "4": 4, "5": 5,
@@ -34,6 +43,20 @@ class Game:
     }
     # All the possible contracts
     contracts = ['pass', 'small', 'guard', 'guard w/o', 'guard against']
+    # Multiplier linked to the contract above
+    contractMultiplier = {
+        'small': 1,
+        'guard': 2,
+        'guard w/o': 4,
+        'guard against': 6
+    }
+    # The cardPoints needed for a taker to win
+    winConditionPoints = {
+        0: 56,
+        1: 51,
+        2: 41,
+        3: 36
+    }
 
     def __init__(self, players=4, deck=None, matchPoints=None, lastDealer=None):
         """A class for simulating a game. Can be started with its play() method."""
@@ -63,7 +86,9 @@ class Game:
 
         # PARAM MATCHPOINTS: set scores if this is the first game in a match
         if matchPoints is None:
-            matchPoints = [0 * self.playerCount]
+            matchPoints = [0] * self.playerCount
+        elif len(matchPoints) != self.playerCount:
+            raise GameException("elements in matchPoints must match number of players in game")
         self.matchPoints = matchPoints
 
         # PARAM DECK: can be set from previous game, or a new deck will be created and shuffled
@@ -89,6 +114,7 @@ class Game:
         # A list containing the cards in the dog
         self._dog = []
         self.dog = []  # Cards transferred from self._dog to self.dog if all players know the cards that were in the dog
+        self.guardAgainstCards = None  # Cards transferred from the dog if contract is 'guard against'
 
         # If a player has to show a card
         self.showedCards = [[]] * self.playerCount
@@ -99,6 +125,7 @@ class Game:
 
         # In a game with five players, the taker calls for a teammate
         self.calledCard = None
+        self.calledPlayer = None
 
         # If exists, player who called a chelem:
         self.chelemPlayer = None
@@ -110,28 +137,36 @@ class Game:
         self.nTricks = int((78 - self.dogSizes[self.playerCount]) / self.playerCount)
 
         # To keep track of a trick's winner, who'll be the startingPlayer of a next trick
-        self.startingPlayer = None
+        self.startingPlayerForTrick = None
 
         # History of past tricks and current trick
         self.tricks: List[list] = []
 
         # The player who played the excuse
-        self.excusePlayer: int = None
+        self.playedExcuse: int = None
         # The player to whom the player playing the excuse ows a card, because this player won the trick the excuse was
         # played in
-        self.owsExcuseCard: int = None
+        self.recipientOfOwedExcuseCard: int = None
+
+        # Points the players make
+        self.wonCardPoints = [0] * self.playerCount
+
+        # TODO: add field containing information about the startingPlayer of each trick
 
     @staticmethod
+    @Memoize
     def create_deck() -> list:
         """Return a list of the 78 cards: four suits, all trumps and the excuse"""
 
-        suits = ['♤', '♡', '♧', '♢']
+        suits = Game.suits
         values = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'C', 'Q', 'K']
 
         # Trumps, ex: "15T"
         trumps = [f"{n}T" for n in range(1, 21 + 1)]
         # Suit cards, ex: "1♤" or "K♧"
-        cards = [f"{values[value]}{suits[suit]}" for suit in range(len(suits)) for value in range(len(values))]
+        cards = [f"{values[value]}{suits[suit]}"
+                 for suit in range(len(suits))
+                 for value in range(len(values))]
 
         # Merge, add excuse "EX"
         deck = cards + trumps + ['EX']
@@ -146,33 +181,38 @@ class Game:
             self._deal()
             self._awaitContracts()
 
+        # When a player has chosen a contract, the cards can be sorted for better playability
+        for player in self.players:
+            player.sortHand()
+
+        # In a 5-player game, let the taker call a card
         if self.playerCount == 5:
             self.calledCard = self.players[self.playerTaking].callPlayer()
 
         # Give the dog to the player that is taking or to the defendants
         self._convertDogToAside()
 
-        # Give each player starting from the one to the right of the dealer and then in a counter-clockwise order the
-        # opportunity to announce a Chelem, only one player can announce a Chelem
-        for i in range(self.playerCount):
-            currentPlayer = self.dealer - i - 1
-            if self.players[currentPlayer].callChelem():
-                # Get the position of the player who called the Chelem
-                self.chelemPlayer = self.players.index(self.players[currentPlayer])
-                # Only the first one to announce a Chelem can do it, no other player after
-                break
+        # Give the taker the opportunity to announce a Chelem
+        if self.players[self.playerTaking].callChelem():
+            # Get the position of the player who called the Chelem
+            self.chelemPlayer = self.players.index(self.players[self.playerTaking])
 
         # Let each player announce a handful starting from the one to the right of the dealer and then in a
         # counter-clockwise order, if
         for i in range(self.playerCount):
             currentPlayer = self.dealer - i - 1
-            if handful := self.players[currentPlayer].callHandful() is not None:
+            # Ask the player if he wants to announce a handful (if he has one)
+            handful = self.players[currentPlayer].callHandful()
+            if handful is not None:
                 self.handfuls[currentPlayer] = handful
 
         # In a game there are as many tricks left to play, then there are cards in a player's hand
         # Play the number of tricks required
         for nTrick in range(self.nTricks):
             self._playTrick(nTrick)
+
+        # Calculate the points for every player at the end of the game
+        self.countPoints()
 
     def _deal(self):
         """Get a list of booleans. For every boolean value, if True a card is put into the dog if False three cards
@@ -207,13 +247,14 @@ class Game:
                 # Set the nextPlayer to what would be the player to the right of the current player
                 nextPlayer -= 1
 
-        # Repeat this function recursively until no player gets a hand containing: only the first trump ('1T') and not
-        # the excuse ('EX')
+        # Repeat the function recursively until no player gets a hand containing:
+        # only the first trump ('1T') and not the excuse ('EX')
         for player in self.players:
             if '1T' in player.hand and 'EX' not in player.hand:
                 if len([card for card in player.hand if 'T' in card]) == 1:
                     self._resetDeck()
                     self._deal()
+                    break
 
     def _getDealOrder(self) -> list:
         """Depending on the playerCount (which may result in different dog sizes) create a list of booleans with a
@@ -289,8 +330,7 @@ class Game:
             player.addCardsToHand(self._dog)
 
             # The cards are shown to the other players (not the case if 'guard w/o' or 'guard against')
-            self.dog = self._dog
-            self._dog = []
+            self.dog = self._dog.copy()
 
             for _ in range(Game.dogSizes[self.playerCount]):
                 player.putCardInAside()
@@ -303,7 +343,7 @@ class Game:
         # In case the contract is a 'guard against' the points of the dog are given to the Defence at the end of the
         # game
         elif self.highestContract == Game.contracts[4]:
-            self.guardAgainstCards = self._dog
+            self.guardAgainstCards = self._dog.copy()
 
     def showCards(self, activePlayer, cards: list):
         """Add cards to a public variable for all players to see and remember which cards the activePlayer had to show."""
@@ -321,25 +361,24 @@ class Game:
         # Exception if a player has called a Chelem, in that case, this player starts
         if n == 0:
             if self.chelemPlayer is None:
-                self.startingPlayer = self.dealer - 1
+                self.startingPlayerForTrick = self.dealer - 1
             else:
-                self.startingPlayer = self.chelemPlayer
+                self.startingPlayerForTrick = self.chelemPlayer  # TODO: make self.startingPlayerForTrick a list
 
-        # Starting from the startingPlayer and in counter-clockwise order
+        # Starting from the startingPlayerForTrick and in counter-clockwise order
         for i in range(self.playerCount):
-            currentPlayer = self.startingPlayer - i
+            currentPlayer = self.startingPlayerForTrick - i
 
             # Get the mainCard for the trick to determine which other cards can be played by the following players
             mainCard: str = None
             # Only works when the card has already been played, so after the first card
             if i > 0:
                 # Get the first card from the n^th trick if it isn't the Excuse
-                if self.tricks[n][self.startingPlayer] == 'EX':
-                    if i > 1:
-                        startingPlayerIndex = self.startingPlayer - 1
-                        mainCard = self.tricks[n][startingPlayerIndex]
+                if self.tricks[n][self.startingPlayerForTrick] == 'EX' and i > 1:
+                    startingPlayerIndex = self.startingPlayerForTrick - 1
+                    mainCard = self.tricks[n][startingPlayerIndex]
                 else:
-                    mainCard = self.tricks[n][self.startingPlayer]
+                    mainCard = self.tricks[n][self.startingPlayerForTrick]
 
             # If existing, find the highest trump played in the current trick
             trumps = sorted([card for card in self.tricks[n] if 'T' in card])
@@ -348,15 +387,42 @@ class Game:
             except IndexError:
                 highestTrump = None
 
+            # Get the card from the player
             playedCard = self.players[currentPlayer].playCard(mainCard, highestTrump)
+
+            # Put the played card in the trick
             self.tricks[n][currentPlayer] = playedCard
 
         # Set a startingPlayer for the next trick
         trickWinner = self._getTrickWinner(n)
-        self.startingPlayer = trickWinner
+        self.startingPlayerForTrick = trickWinner
 
         # Give the cards of the trick to whoever should get them
-        self.giveBackCardsOfAWonTrick(n, trickWinner)
+        self.giveBackCards(n, trickWinner)
+
+    def _getCalledPlayer(self) -> int:
+        """Get the calledPlayer based on when the calledCard was played"""
+
+        # If this game doesn't have a calledCard
+        if self.calledCard is None:
+            return None
+
+        # If card in the _dog, the taker has called himself as such, there is no calledPlayer
+        if self.calledCard in self._dog:
+            return None
+
+        # Get the player associated to the called card
+        for trick in self.tricks:
+            for card in trick:
+                if card == self.calledCard:
+                    calledPlayer = trick.index(card)
+                    # If the player who played the calledCard is the taker, the taker has called himself as such, there
+                    # is no calledPlayer
+                    if calledPlayer == self.players.index(self.players[self.playerTaking]):
+                        return None
+                    # Otherwise, the player who played the card is the calledPlayer
+                    else:
+                        return calledPlayer
 
     def _getTrickWinner(self, n: int) -> int:
         """Find which player has played the card that won the trick."""
@@ -367,11 +433,11 @@ class Game:
         # Get the mainCard for the trick
         # The mainCard is the first card played, except if the excuse has been played where the mainCard becomes the
         # second card played
-        if trick[self.startingPlayer] == 'EX':
-            startingPlayerIndex = self.startingPlayer - 1
+        if trick[self.startingPlayerForTrick] == 'EX':
+            startingPlayerIndex = self.startingPlayerForTrick - 1
             mainCard = trick[startingPlayerIndex]
         else:
-            mainCard = trick[self.startingPlayer]
+            mainCard = trick[self.startingPlayerForTrick]
         mainCardValue, mainCardType = mainCard[:-1], mainCard[-1]
 
         # Check if any card in the trick is a trump
@@ -388,13 +454,29 @@ class Game:
             # Find the card with the highest value
             winningCard = sorted(cardsOfMainCardsSuitInTrick, key=lambda s: Game.cardNameToValue[s[:-1]])[-1]
 
-        # If a player who has announced a Chelem plays the excuse in the last trick, he wins the trick
-        if self.nTricks - 1 == n and self.chelemPlayer is not None and trick[self.chelemPlayer] == 'EX':
-            winningCard = 'EX'
+        # If the excuse is played in the last trick
+        if self.nTricks - 1 == n and 'EX' in trick and self.chelemPlayer is not None:
+            # If the same team won all tricks before the last, if that team also played the excuse in the last trick:
+            if self.teamWonAllTricks(range(self.nTricks - 1)[0]):
+                # The excuse is in the only situation in which it wins
+                winningCard = 'EX'
 
         return trick.index(winningCard)
 
-    def giveBackCardsOfAWonTrick(self, n: int, trickWinner: int):
+    def teamWonAllTricks(self, tricks: range) -> (bool, str):
+        """TODO: write"""
+
+        takerTeam = [self.playerTaking, self.calledPlayer]
+        if (all([self._getTrickWinner(n) in takerTeam
+                 for n in range(tricks)]) and self.playedExcuse in takerTeam):
+            return True, 'taker'
+        elif (all([self._getTrickWinner(n) not in takerTeam
+                   for n in range(tricks)]) and self.playedExcuse not in takerTeam):
+            return True, 'defense'
+        else:
+            return False, None
+
+    def giveBackCards(self, n: int, trickWinner: int) -> None:
         """Give the cards to the winner, and handle situations in which the cards go to other players"""
 
         # Get all the cards that were played in the trick
@@ -403,40 +485,216 @@ class Game:
         # Return the excuse to its initial owner if the excuse has been played in this trick and if this isn't the last
         # trick
         if 'EX' in trick and self.nTricks - 1 != n:
-            # Get the identity of the player in the Game.players list
-            self.excusePlayer = trick.index('EX')
+            # Get the identity of the player that played the excuse in the Game.players list
+            self.playedExcuse = trick.index('EX')
             # If the player who played the excuse is not already getting back his card (so that he doesn't ow himself a
             # card)
-            if self.excusePlayer != trickWinner:
+            if self.playedExcuse != trickWinner:  # Happens if this is the last card of a player in a Chelem
                 # Give back the card
-                self.players[self.excusePlayer].takeCardsWon([trick.pop(self.excusePlayer)])
+                self.players[self.playedExcuse].takeCardsWon([trick.pop(self.playedExcuse)])
                 # Memorize whom the person that played the excuse ows a card
-                self.owsExcuseCard = trickWinner
+                self.recipientOfOwedExcuseCard = trickWinner
 
         # After the excuse has been given to the right person, the rest of the trick goes to its winner
         self.players[trickWinner].takeCardsWon(trick)
 
-        # But the player who played the excuse ows a 1/2 point card to the player that won the trick in which the
-        # excuse was played  # TODO: if (at the end of the game / during the game), the card wasn't given, a player of the same team gives one
+        # The player who played the excuse ows a 1/2 point card to the player that won the trick in which the excuse
+        # was played.
         # If there is a player to whom a card is owed
-        if self.owsExcuseCard is not None:
-            # Get all the cards that have a value of 1/2 point
-            halfAPointCards = [card for card in self.players[self.excusePlayer].cardsWon
-                               if 'EX' not in card and '1T' not in card and '21T' not in card and
-                               ('T' in card or Game.cardNameToValue[card[:-1]] <= 10)]
-            # If there is a card that can be given
-            if len(halfAPointCards) > 0:
-                # Give that card from the players own stack and put it into the other players stack
-                excusePlayerCardsWon = self.players[self.excusePlayer].cardsWon
-                owedCard = excusePlayerCardsWon.pop(excusePlayerCardsWon.index(halfAPointCards[0]))
-                self.players[self.owsExcuseCard].takeCardsWon([owedCard])
-                # No card is owed anymore
-                self.owsExcuseCard = None
+        if self.recipientOfOwedExcuseCard is not None:
+            self.giveOwedExcuseCard(self.playedExcuse)
+
+        # If this isn't the last trick end function here
+        if n != self.nTricks - 1:
+            return
+
+        # Get the player that played the calledCard, is None if the card wasn't played
+        self.calledPlayer = self._getCalledPlayer()
+
+        # If this is the last trick and the card is still owed, check if any teammate of the person that owes the card
+        # has a card to give to the recipient
+        if self.recipientOfOwedExcuseCard is not None:
+            # In a 5-player game, try with the calledPlayer
+            if self.calledPlayer is not None and self.playedExcuse == self.playerTaking:
+                self.giveOwedExcuseCard(self.calledPlayer)
+            # In a 5-player game, try with the playerTaking
+            elif self.calledPlayer is not None and self.playedExcuse == self.calledPlayer:
+                self.giveOwedExcuseCard(self.playerTaking)
+            # In any game, another defendant might have a card
+            else:
+                # For each player
+                for i in range(self.playerCount):
+                    # Find a player that is not the taker or the person they might have called
+                    if i != self.playerTaking and i != self.calledPlayer:
+                        self.giveOwedExcuseCard(i)
+                    # If this defender was able to provide a card, don't also make another player give a card
+                    if self.recipientOfOwedExcuseCard is None:
+                        break
+
+        # If the contract was a guard against the dog, give the cards that were in the dog to one of the defendants
+        if self.guardAgainstCards is not None:
+            # For each player
+            for i in range(self.playerCount):
+                # Find a player that is not the taker or the person they might have called
+                if i != self.playerTaking and i != self.calledPlayer:
+                    self.players[i].takeCardsWon(self.guardAgainstCards)
+                    # If this defender was able to provide a card, don't also make another player give a card
+                    break
+
+    def giveOwedExcuseCard(self, owedCardHolder) -> None:
+        """The person passed as parameter gives a card to the player that won the trick in which the excuse was played
+        """
+
+        # Get all the cards of the person that ows a card, that have a value of 1/2 point
+        halfAPointCards = [card for card in self.players[owedCardHolder].cardsWon
+                           if 'EX' not in card and '1T' not in card and '21T' not in card and
+                           ('T' in card or Game.cardNameToValue[card[:-1]] <= 10)]
+        # If there is a card that can be given
+        if len(halfAPointCards) > 0:
+            # Give that card from the players own stack and put it into the other players stack
+            owedCardHolderCardsWon = self.players[owedCardHolder].cardsWon
+            owedCard = owedCardHolderCardsWon.pop(owedCardHolderCardsWon.index(halfAPointCards[0]))
+            self.players[self.recipientOfOwedExcuseCard].takeCardsWon([owedCard])
+            # No card is owed anymore
+            self.recipientOfOwedExcuseCard = None
+
+    def cardToPoints(self, card) -> float:
+        if card[-1] in Game.suits:
+            cardValue = Game.cardNameToValue[card[:-1]]
+            if cardValue < 10:
+                return 0.5
+            else:
+                # Example: 'J'.value = 11 => 11 - 10 + 0.5 = 1.5
+                return cardValue - 10 + 0.5
+        elif 'T' in card and card not in ['1T', '21T']:
+            return 0.5
+        else:
+            return 4.5
+
+    def countPoints(self):
+        # TODO: put back cards in pairs??
+
+        # Get the points every player made during the game
+        for i in range(self.playerCount):
+            self.wonCardPoints[i] = sum([self.cardToPoints(card) for card in self.players[i].cardsWon])
+
+        # Get the points of the taker
+        takerPoints = self.wonCardPoints[self.playerTaking]
+        # Get the number of oudlers hold by the taker
+        takerOudlers = [card for card in self.players[self.playerTaking].cardsWon
+                        if card in ['1T', '21T', 'EX']]
+
+        # In a 5-player game
+        if self.calledPlayer is not None:
+            # Merge the taker's cardPoints and the ones of his partner
+            takerPoints += self.wonCardPoints[self.calledPlayer]
+            # Merge the taker's oudlerCount and the one of his partner
+            takerOudlers.extend([card for card in self.players[self.calledPlayer].cardsWon
+                                 if card in ['1T', '21T', 'EX']])
+
+        # In a 3 or 5 player game the points are rounded up for the winning team and rounded down for the loosing one
+        if self.playerCount == 3 or self.playerCount == 5:
+            if takerPoints - Game.winConditionPoints[len(takerOudlers)] >= 0:
+                math.ceil(takerPoints)
+            else:
+                math.floor(takerPoints)
+
+        # The taker's points = the cardPoints - the required amount (linked to the amount of oudlers) + 25
+        finalPoints = takerPoints - Game.winConditionPoints[len(takerOudlers)] + 25
+
+        # This value is multiplied by the contract
+        currentContractMultiplier = Game.contractMultiplier[self.highestContract]
+        finalPoints = finalPoints * currentContractMultiplier
+
+        # Determine if the taker has won or lost
+        if finalPoints > 0:
+            takerWon = True
+        else:
+            takerWon = False
+
+        # Get last trick (trick before last in case of a Chelem)
+        if self.teamWonAllTricks(self.nTricks)[0]:
+            petitAuBoutTrick = self.tricks[self.nTricks - 2]
+        else:
+            petitAuBoutTrick = self.tricks[self.nTricks - 1]
+        # Check if the petit was played in that trick
+        if petitAuBoutTrick.count('1T') == 1:
+            # Petit au bout, adds or removes points depending on who played it
+            if self._getTrickWinner(self.nTricks - 1) in [self.playerTaking, self.calledPlayer]:
+                # If the taker or the called player played the petit, add 10 points, multiplied by the contract's
+                # multiplier
+                finalPoints += 10 * currentContractMultiplier
+            else:
+                # If the defense played the petit, remove 10 points, multiplied by the contract's multiplier
+                finalPoints -= 10 * currentContractMultiplier
+
+        # Get points for announced handfuls if possible
+        handfulValue = 0
+        for handful in self.handfuls:
+            if handful is not None:
+                handfulValue += Game.handfulValues[handful]
+        # Add to finalPoints if the taker won
+        if takerWon:
+            finalPoints += handfulValue
+        # Remove from finalPoints if the taker lost
+        else:
+            finalPoints -= handfulValue
+
+        # Check if one team won all tricks
+        allTricksWon, allTricksWinner = self.teamWonAllTricks(self.nTricks)
+        # In case a Chelem has been made
+        if allTricksWon:
+            # If it was announced by the taker
+            if self.chelemPlayer is not None:
+                finalPoints += 400 * currentContractMultiplier
+            # If it wasn't announced, but the taker made a Chelem
+            elif allTricksWinner == 'taker':
+                finalPoints += 200 * currentContractMultiplier
+            # If it wasn't announced, but the defense made a Chelem
+            elif allTricksWinner == 'defense':
+                # Every defendant gets 200 points
+                for i in range(self.playerCount):
+                    if i not in [self.playerTaking, self.calledPlayer]:
+                        self.matchPoints[i] += 200
+        # In case a Chelem has been failed
+        elif self.chelemPlayer is not None:
+            finalPoints -= 200 * currentContractMultiplier
+
+        # If the excuse is in the defense's hand, it is only worth 4 points
+        if takerOudlers.count('EX') == 0 and allTricksWinner == 'defense':
+            finalPoints += 0.5 * currentContractMultiplier
+
+        # Give points to players
+        for i in range(self.playerCount):
+            if self.playerCount == 3:
+                if i == self.playerTaking:
+                    self.matchPoints[i] += finalPoints * 2
+                else:
+                    self.matchPoints[i] -= finalPoints
+            elif self.playerCount == 4:
+                if i == self.playerTaking:
+                    self.matchPoints[i] += finalPoints
+                else:
+                    self.matchPoints[i] -= math.ceil(finalPoints / 3)
+            elif self.playerCount == 5:
+                if self.calledPlayer is not None:
+                    if i == self.playerTaking:
+                        self.matchPoints[i] += finalPoints * 4
+                    else:
+                        self.matchPoints[i] -= finalPoints
+                else:
+                    if i == self.playerTaking:
+                        self.matchPoints[i] += finalPoints * 2
+                    elif i == self.calledPlayer:
+                        self.matchPoints[i] += finalPoints
+                    else:
+                        self.matchPoints[i] -= finalPoints
+
 
     def end(self) -> tuple:  # TODO: export data for following game
         """Returns all information that is needed to start a new game with the already existing deck and players"""
         # TODO: The deck can be gotten from the history of tricks as to ensure the order of the cards, add the dog to the
-        # beginning and put the cards of the players into the deck team after team (if there are some)
+        #       beginning and put the cards of the players into the deck team after team (if there are some)
 
         return ()
 
@@ -450,7 +708,7 @@ class Player:
         self.name = str(name)
 
         validStrategies = ['human', 'random']
-        if strategy in validStrategies:  # TODO: (LONG TERM) MORE STRATEGIES (AI)
+        if strategy in validStrategies:  # TODO: (LONG TERM) MORE STRATEGIES (AI) | pass question and options (and brain) to ai-function
             self.strategy = strategy
         else:
             raise PlayerException("Please use one of the following strategies:", validStrategies)
@@ -497,12 +755,17 @@ class Player:
         elif self.strategy == 'random':
             return rd.choice(options)
 
-    def addCardsToHand(self, cards: list, sort=False) -> None:
+    def addCardsToHand(self, cards: list, sort=True) -> None:
         """Add cards to a player's hand"""
 
         self.hand.extend(cards)
         if sort:
-            self.hand.sort(key=self._handSortKey)
+            self.sortHand()
+
+    def sortHand(self):
+        """Sorts the player's hand in the order of the deck's creation"""
+
+        self.hand.sort(key=self._handSortKey)
 
     def _handSortKey(self, s: str) -> str:
         """Allows sorting of the cards in the same order as they were dealt"""
@@ -608,7 +871,8 @@ class Player:
         else:
             return False
 
-    def callHandful(self):
+    def callHandful(
+            self):  # TODO: player chooses which trumps to hide if he hides some (excuse only if if needed to fill handful)
         """Let the player decide (if possible) whether they want to announce a handful"""
 
         # Get the number of trumps in the player's hand and how many are needed for calling the handfuls
@@ -655,13 +919,20 @@ class Player:
         # Base options are all the cards in the player's hand
         options = self.hand.copy()
 
+        # If in a 5-player game, it is the first card of the first trick, remove any option of the same suit as the
+        # calledCard except for the calledCard itself
+        if self.game.calledCard is not None and len(self.game.tricks[0]) == 0:
+            for card in options:
+                if card[-1] == self.game.calledCard[-1] and not card == self.game.calledCard:
+                    options.remove(card)
+
         # If the first card of the trick has already been played, limit the options the player has according to
         # this card
         if mainCard is not None:
             mainCardValue, mainCardType = mainCard[:-1], mainCard[-1]
 
             # If the mainCard is part of a suit
-            if mainCardType in ['♤', '♡', '♧', '♢']:
+            if mainCardType in Game.suits:
                 # Check if the player has a card of the required suit in his hand
                 cardsOfMainCardSuitInHand = [option for option in options if mainCardType in option]
                 # If this is the case, all cards of the same suit can be played, and no other card
@@ -701,9 +972,6 @@ class Player:
         if 'EX' in self.hand:
             options.append('EX')
 
-        # Sort options in deck order
-        options.sort(key=self._handSortKey)
-
         # Get the card the player plays
         card = self._getDecision(question, options)
         self.hand.remove(card)
@@ -711,27 +979,13 @@ class Player:
 
 
 if __name__ == '__main__':
+    from line_profiler_pycharm import profile  # NOQA
     import time
 
-    # game = Game(3)
-    # game.play()
-    # print()
-    # game2 = Game(4, lastDealer=3)
-    # game2.play()
-    # print()
-    # game3 = Game(5)
-    # game3.play()
-
-    # exit()
-    games = 0  # NOQA
-    tests = 1e7
+    games = 0
+    tests = 1e4
     TOTALSTART = time.perf_counter_ns()
     while games < tests:
-        start = time.perf_counter_ns()
         game = Game(rd.randint(3, 5), lastDealer=rd.randint(0, 3))
         game.play()
-        singleTime = time.perf_counter_ns() - start
-        print(singleTime, games)
         games += 1
-    TOTALTIME = time.perf_counter_ns() - TOTALSTART
-    print('total:', TOTALTIME, 'average:', TOTALTIME / tests)
