@@ -337,6 +337,9 @@ class Game:
             player.addCardsToHand(self._dog)
 
             # The cards are shown to the other players (not the case if 'guard w/o' or 'guard against')
+            printh(f"{player.name} takes the dog containing the following cards: {self._dog}")
+
+            # The visible cards are in self.dog
             self.dog = self._dog.copy()
 
             for _ in range(Game.dogSizes[self.playerCount]):
@@ -355,6 +358,10 @@ class Game:
     def showCards(self, activePlayer, cards: list):
         """Add cards to a public variable for all players to see and remember which cards the activePlayer had to show."""
 
+        # When human-playing, show the cards literally
+        printh(f"{self.players[activePlayer].name} shows the following cards to everyone: {cards}")
+
+        # Store the cards as showed
         self.showedCards[activePlayer].extend(cards)
 
     # @profile
@@ -800,11 +807,13 @@ class Player:
             printh(f"Hand: {sorted(self.hand, key=self._handSortKey)}", recipient=self.name)
             printh(question, recipient=self.name)
 
+            # Get the player's decision
             playerAnswer = None
             while playerAnswer not in options:
                 printh(f"Please enter one of the following options {options}:", recipient=self.name)
                 if len(options) > 1:
                     playerAnswer = inputh()
+                # While human-playing if there is only one option, choose it automatically
                 else:
                     playerAnswer = options[0]
 
