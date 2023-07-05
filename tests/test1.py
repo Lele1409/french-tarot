@@ -14,7 +14,8 @@ def testsAfterPlaying(game):
 
 if __name__ == '__main__':
     # Set execution mode to random
-    src.game.MODE = 'random'
+    src.game.MODE = 'human'
+    rd.seed = 0
 
     GAMES = 0
     while True:
