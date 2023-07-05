@@ -803,7 +803,10 @@ class Player:
             playerAnswer = None
             while playerAnswer not in options:
                 printh(f"Please enter one of the following options {options}:", recipient=self.name)
-                playerAnswer = inputh()
+                if len(options) > 1:
+                    playerAnswer = inputh()
+                else:
+                    playerAnswer = options[0]
 
             return playerAnswer
 

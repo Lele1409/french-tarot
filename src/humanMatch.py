@@ -42,7 +42,8 @@ def startMatch():
 
         # Assign a name to each player in the game
         for player in runningGame.players:
-            player.rename(playerNames[runningGame.players.index(player)])
+            playerName = playerNames[runningGame.players.index(player)]
+            player.rename(playerName)
 
         # Start the game
         runningGame.play()
