@@ -1,9 +1,8 @@
 import math
 import random as rd
 from typing import List
-from functools import lru_cache
 from src.tarotExceptions import GameException, PlayerException
-from src.humanIO import printh as printh, inputh as inputh, TOGGLE_ON
+from src.humanIO import printh as printh, inputh as inputh
 from src.utils import printAllGameFields as debug, Memoize  # NOQA
 
 # from line_profiler_pycharm import profile  # NOQA
@@ -81,9 +80,11 @@ class Game:
 
         # If the Players already existed
         elif type(players) is list:
-            if any([player is not Player for player in players]) or len(players) not in [3, 4, 5]:
+            if any([type(player) is not Player for player in players]) or len(players) not in [3, 4, 5]:
                 raise GameException(paramPlayersExceptionString)
             self.players: List[Player] = players
+
+        # If the players parameter doesn't hold an integer or a list of players
         else:
             raise GameException(paramPlayersExceptionString)
 
@@ -159,7 +160,6 @@ class Game:
         # Points the players make
         self.wonCardPoints = [0] * self.playerCount
 
-    @lru_cache()
     def create_deck(self) -> list:
         """Return a list of the 78 cards: four suits, all trumps and the excuse"""
 
@@ -184,6 +184,7 @@ class Game:
         # Make the players choose a contract after the cards are dealt to them
         # If no contract is chosen, start over by re-dealing
         while self.highestContract == 'pass':
+            printh("Dealing the cards and asking player which contract they want to announce.")
             self._deal()
             self._awaitContracts()
 
@@ -369,6 +370,9 @@ class Game:
             else:
                 self.startingPlayerForTrick[n] = self.chelemPlayer
 
+        # Display start of a trick when human-playing
+        printh(f"Start of trick {n+1}. {self.players[self.startingPlayerForTrick[n]].name} is first to play.")
+
         # Starting from the startingPlayerForTrick and in counter-clockwise order
         for i in range(self.playerCount):
             currentPlayer = self.startingPlayerForTrick[n] - i
@@ -403,6 +407,9 @@ class Game:
 
         # Give the cards of the trick to whoever should get them
         self.giveBackCards(n, trickWinner)
+
+        # Display a recap of the trick to the human-player
+        printh(f"End of trick {n+1}, {self.players[trickWinner].name} won the trick.")
 
     def _getCalledPlayer(self) -> int:
         """Get the calledPlayer based on when the calledCard was played"""
@@ -735,7 +742,16 @@ class Game:
         # TODO: The deck can be gotten from the history of tricks as to ensure the order of the cards, add the dog to the
         #       beginning and put the cards of the players into the deck team after team (if there are some)
 
-        return ()
+        # Get a new deck
+        deck = []
+        for n in range(self.playerCount):
+            deck.extend([cards for cards in self.players[n].cardsWon])
+
+        # Set the players back to start
+        for player in self.players:
+            player.restart()
+
+        return self.players, deck, self.matchPoints, self.dealer
 
 
 class Player:
@@ -808,7 +824,6 @@ class Player:
 
         self.hand.sort(key=self._handSortKey)
 
-    @lru_cache()
     def _handSortKey(self, s: str) -> str:
         """Allows sorting of the cards in the same order as they were dealt"""
 
@@ -1031,6 +1046,11 @@ class Player:
         self.hand.remove(card)
         return card
 
+    def restart(self):
+        self.hand = []
+        self.cardsWon = []
+        self.calledCard = None
+
 
 if __name__ == '__main__':
 
@@ -1043,8 +1063,6 @@ if __name__ == '__main__':
 
 """
 TODO:
-choose player number -> match.py
-display player number
-when everyone passes display that it happened
-see what was played, any card from everyone, recap for the trick
+choose player number -> humanMatch.py
+display player number -> humanMatch.py
 """
