@@ -951,23 +951,23 @@ class Player:
         options = []
 
         # Eliminate the options that aren't possible
+        if len(trumpsInHand) < trumpsNeededForHandful[0]:
+            return None
         if len(trumpsInHand) >= trumpsNeededForHandful[0]:
             options.append('Simple handful')
-        elif len(trumpsInHand) >= trumpsNeededForHandful[1]:
+        if len(trumpsInHand) >= trumpsNeededForHandful[1]:
             options.append('Double handful')
-        elif len(trumpsInHand) >= trumpsNeededForHandful[2]:
+        if len(trumpsInHand) >= trumpsNeededForHandful[2]:
             options.append('Triple Handful')
-        else:
-            return None
 
         # Add the possibility not to call the handful
-        options.append("Don't call handful")
+        options.append('Don\'t call handful')
 
         # Get decision from player
         decision = self._getDecision(question, options)
 
         # If the player decides not to call, the handful returns the same as if it wasn't possible
-        if decision == "Don't call handful":
+        if decision == 'Don\'t call handful':
             return None
 
         # Remove excuse from the cards to show if there are too many cards to show compared to the number needed for the
