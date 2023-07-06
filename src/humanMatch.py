@@ -1,4 +1,4 @@
-import src.game as game
+import src.tarot as tarot
 import src.humanIO as humanIO
 
 TITLE = """
@@ -20,7 +20,7 @@ def startMatch():
     points = None
     lastDealer = None
     gameEnd = False
-    game.MODE = 'human'
+    tarot.MODE = 'human'
 
     # Print the game's title screen
     print(TITLE)
@@ -38,7 +38,7 @@ def startMatch():
 
     while not gameEnd:
         # Create game
-        runningGame = game.Game(players, deck=deck, matchPoints=points, lastDealer=lastDealer)
+        runningGame = tarot.Game(players, deck=deck, matchPoints=points, lastDealer=lastDealer)
 
         # Assign a name to each player in the game
         for player in runningGame.players:

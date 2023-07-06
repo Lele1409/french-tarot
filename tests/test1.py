@@ -1,4 +1,4 @@
-import src.game
+import src.tarot
 import src.utils
 import time
 import random as rd
@@ -14,14 +14,14 @@ def testsAfterPlaying(game):
 
 if __name__ == '__main__':
     # Set execution mode to random
-    src.game.MODE = 'human'
+    src.tarot.MODE = 'human'
 
     GAMES = 0
     while True:
         start = time.perf_counter_ns()  # Single test performance timer start
 
         # Try running the game if it fails at some point show debug information
-        game = src.game.Game(rd.randint(3, 5), lastDealer=rd.randint(0, 3))
+        game = src.tarot.Game(rd.randint(3, 5), lastDealer=rd.randint(0, 3))
         try:
             game.play()
         except Exception as e:
