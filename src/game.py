@@ -296,6 +296,8 @@ class Game:
         if self.dealer < 0:
             self.dealer = self.playerCount - 1
 
+        printh(f"{self.players[self.dealer].name} is the dealer.")
+
     def _awaitContracts(self) -> None:
         """Get the desired contract from every player in the game"""
 
@@ -821,7 +823,7 @@ class Player:
             printh(question, recipient=self.name)
             printh(f"Please enter one of the following options {options}:", recipient=self.name)
             choice = rd.choices(options, k=1)[0]  # faster than rd.choice(l)
-            printh(choice, recipient=self.name)
+            printh(choice, recipient='Input')
             return choice
 
     def addCardsToHand(self, cards: list, sort=True) -> None:
