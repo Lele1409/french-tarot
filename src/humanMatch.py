@@ -33,7 +33,7 @@ def startMatch():
     # Get names for all the players
     playerNames = []
     for i in range(players):
-        humanIO.printh(f"Player {i+1}, what is your name?")
+        humanIO.printh(f"Player {i+1}, what is your name? [entering 'random' will make the player play itself]")
         playerNames.append(humanIO.inputh())
 
     while not gameEnd:
@@ -43,7 +43,11 @@ def startMatch():
         # Assign a name to each player in the game
         for player in runningGame.players:
             playerName = playerNames[runningGame.players.index(player)]
-            player.rename(playerName)
+            if 'random' in playerName:
+                player.rename(f"Player R{runningGame.players.index(player)}")
+                player.strategy = 'random'
+            else:
+                player.rename(playerName)
 
         # Start the game
         runningGame.play()

@@ -7,7 +7,6 @@ from src.utils import printAllGameFields as debug, Memoize  # NOQA
 
 # from line_profiler_pycharm import profile  # NOQA
 
-# TODO: add a toggleable print function for more information when 'human' playing
 # Set execution mode
 MODE = 'human'
 # Based on execution mode, toggle print
@@ -112,6 +111,7 @@ class Game:
                                  as in a newly generated deck""")
 
         # PARAM LASTDEALER: can be set from previous game, making the dealer change by one player
+        # If no previous dealer is given get one randomly
         if lastDealer is None:
             self.dealer = rd.randint(0, self.playerCount - 1)
         elif type(lastDealer) is int and lastDealer in range(0, self.playerCount + 1):
@@ -234,7 +234,7 @@ class Game:
         # List of booleans specifying the deal type
         deals = self._getDealOrder()
 
-        nextPlayer = self.dealer - 1
+        playerToGetCards = self.dealer - 1
         for deal in deals:
             # If a deal equals to True, it is meant to go into the dog
             if deal == True:  # NOQA
@@ -244,22 +244,24 @@ class Game:
             # Else if a deal equals to False, it is meant to be dealt to a player
             else:
                 # If the index goes too far, rollover to the other end
-                if nextPlayer < 0:
-                    nextPlayer = self.playerCount - 1
+                if playerToGetCards < 0:
+                    playerToGetCards = self.playerCount - 1
 
                 # Give the three first cards of the deck to the next player
                 cardsDealt = [self.deck.pop(0) for _ in range(Game.dealSizes[self.playerCount])]
-                self.players[nextPlayer].addCardsToHand(cardsDealt, sort=False)
+                self.players[playerToGetCards].addCardsToHand(cardsDealt, sort=False)
 
-                # Set the nextPlayer to what would be the player to the right of the current player
-                nextPlayer -= 1
+                # Set the playerToGetCards to what would be the player to the right of the current player
+                playerToGetCards -= 1
 
         # Repeat the function recursively until no player gets a hand containing:
         # only the first trump ('1T') and not the excuse ('EX')
         for player in self.players:
             if '1T' in player.hand and 'EX' not in player.hand:
                 if len([card for card in player.hand if 'T' in card]) == 1:
+                    printh(f"{player.name} has only the petit as trump, re-dealing the cards.")
                     self._resetDeck()
+                    self._nextDealer()
                     self._deal()
                     break
 
@@ -288,8 +290,7 @@ class Game:
         return deals
 
     def _nextDealer(self) -> None:
-        """Change the dealer when re-dealing the cards and any other action starting at a position relative to the
-        dealer"""
+        """Change the dealer to the person to their right"""
 
         self.dealer -= 1
         if self.dealer < 0:
@@ -378,7 +379,7 @@ class Game:
                 self.startingPlayerForTrick[n] = self.chelemPlayer
 
         # Display start of a trick when human-playing
-        printh(f"Start of trick {n+1}. {self.players[self.startingPlayerForTrick[n]].name} is first to play.")
+        printh(f"Start of trick {n + 1}. {self.players[self.startingPlayerForTrick[n]].name} is first to play.")
 
         # Starting from the startingPlayerForTrick and in counter-clockwise order
         for i in range(self.playerCount):
@@ -410,13 +411,13 @@ class Game:
 
         # Set a startingPlayer for the next trick
         trickWinner = self._getTrickWinner(n)
-        self.startingPlayerForTrick[n if n == self.nTricks - 1 else n+1] = trickWinner
+        self.startingPlayerForTrick[n if n == self.nTricks - 1 else n + 1] = trickWinner
 
         # Give the cards of the trick to whoever should get them
         self.giveBackCards(n, trickWinner)
 
         # Display a recap of the trick to the human-player
-        printh(f"End of trick {n+1}, {self.players[trickWinner].name} won the trick.")
+        printh(f"End of trick {n + 1}, {self.players[trickWinner].name} won the trick.")
 
     def _getCalledPlayer(self) -> int:
         """Get the calledPlayer based on when the calledCard was played"""
@@ -610,7 +611,6 @@ class Game:
 
     # @profile
     def countPoints(self):
-        # TODO: put back cards in pairs??
 
         # Get the points every player made during the game
         for i in range(self.playerCount):
@@ -744,10 +744,8 @@ class Game:
                     else:
                         self.matchPoints[i] -= finalPoints
 
-    def end(self) -> tuple:  # TODO: export data for following game
+    def end(self) -> tuple:
         """Returns all information that is needed to start a new game with the already existing deck and players"""
-        # TODO: The deck can be gotten from the history of tricks as to ensure the order of the cards, add the dog to the
-        #       beginning and put the cards of the players into the deck team after team (if there are some)
 
         # Get a new deck
         deck = []
@@ -781,8 +779,6 @@ class Player:
         self.cardsWon = []
 
         self.game: Game = None
-
-        self.calledCard = None
 
     def rename(self, name) -> None:
         """Change the name of a player"""
@@ -821,7 +817,12 @@ class Player:
 
         # Return a randomly chosen option
         elif self.strategy == 'random':
-            return rd.choices(options, k=1)[0]  # faster than rd.choice(l)
+            printh(f"Hand: {sorted(self.hand, key=self._handSortKey)}", recipient=self.name)
+            printh(question, recipient=self.name)
+            printh(f"Please enter one of the following options {options}:", recipient=self.name)
+            choice = rd.choices(options, k=1)[0]  # faster than rd.choice(l)
+            printh(choice, recipient=self.name)
+            return choice
 
     def addCardsToHand(self, cards: list, sort=True) -> None:
         """Add cards to a player's hand"""
@@ -1003,9 +1004,8 @@ class Player:
         # If in a 5-player game, it is the first card of the first trick, remove any option of the same suit as the
         # calledCard except for the calledCard itself
         if self.game.calledCard is not None and self.game.tricks[0][0] == '':
-            for card in options:
-                if card[-1] == self.game.calledCard[-1] and not card == self.game.calledCard:
-                    options.remove(card)
+            options = [card for card in options
+                       if not (card[-1] == self.game.calledCard[-1] and not card == self.game.calledCard)]
 
         # If the first card of the trick has already been played, limit the options the player has according to
         # this card
@@ -1061,7 +1061,6 @@ class Player:
     def restart(self):
         self.hand = []
         self.cardsWon = []
-        self.calledCard = None
 
 
 if __name__ == '__main__':
@@ -1072,9 +1071,3 @@ if __name__ == '__main__':
         game = Game(rd.randint(3, 5), lastDealer=rd.randint(0, 3))
         game.play()
         games += 1
-
-"""
-TODO:
-choose player number -> humanMatch.py
-display player number -> humanMatch.py
-"""
