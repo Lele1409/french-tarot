@@ -109,7 +109,7 @@
 - Determine if the taker fulfilled the contract depending on the points needed 
   depending on the oudlers taken
 
-#### Points
+#### Points 
 - In total, there are 91 points on the cards
 - If the Excuse is held by the Defence in case of a Chelem, it is worth 4 points
 - The difference of the actual points made and the points needed to get to a win 
@@ -123,6 +123,7 @@
 - The defendants each get this sum
 - Those points then have to be multiplied by 3, the number of players in the Defence, 
   resulting in the points for the taker
+_(There is a formula in the mobile game French Tarot)_
 
 ## Official rules
 [Official link](https://www.fftarot.fr/assets/documents/R-RO201206.pdf), french source
