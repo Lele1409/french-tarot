@@ -23,7 +23,7 @@ class Game:
     def
 
 
-ObjectNames
-functionNames
-variable_names
-__private_variable
+# ObjectNames
+# functionNames
+# variable_names
+# __private_variable
