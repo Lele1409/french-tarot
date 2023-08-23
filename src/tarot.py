@@ -18,7 +18,7 @@ else:
 
 class Game:
     # Suits for the cards
-    suits = ['♤', '♡', '♧', '♢']
+    suits = ['♠', '♥', '♣', '♦']
     # Information about the number of cards in the dog
     dogSizes = {
         3: 6,
