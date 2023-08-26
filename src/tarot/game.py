@@ -10,10 +10,10 @@ class Game:
         self.aside: list[Card] = []
         self.current_player: str = starting_player  # TODO: put into match?
         self.tricks: list[Trick] = []
-        self.contract_type: str = None
-        self.taking_player: str = None
-        self.called_player: str = None
-        self.chelem_player: str = None
+        self.contract_type: str = "Pass"
+        self.taking_player: Player = None
+        self.called_player: Player = None
+        self.chelem_player: Player = None
         self.defence: list[Player] = []
         self.attack: list[Player] = []
         self.handful_players: list[Player] = []
@@ -29,26 +29,32 @@ class Game:
     def chooseContract(self)
         """choose contract and put taking player in adequate categories"""
 
-        contract_options = {"Pass": 0, "Small": 1, "Guard": 2, "Guard Without": 3, "Guard Against": 4}  # contract hierarchy: Pass < Small < Guard < Guard Without < Guard Against
-        for Player in players :
+        contract_options: list[str] = ["Small", "Guard", "Guard Without", "Guard Against"]  # contract hierarchy: Pass < Small < Guard < Guard Without < Guard Against
 
-            contrat=getDecision(Player.type,contract,contract_options)
-
-        self.contract_type =
-        if contract_type == "Pass":
+        for player in self.players:  # TODO: verify player order
+            contract_options.insert(0, "Pass")
+            player_contract: str = getDecision(player, "contract", contract_options)
+            if player_contract != "Pass":
+                player_chelem: str = getDecision(player, "chelem", ["yes", "no"])
+                if player_chelem == "yes":
+                    self.chelem_player = player
+                self.contract_type = player_contract
+                self.taking_player = player
+            for contract in contract_options:
+                if contract_options.index(contract) < contract_options.index(player_contract):
+                    contract_options.remove(contract)
+        if self.contract_type == "Pass":
             endGame()
-        self.taking_player =
         self.attack.append(self.taking_player)
-        self.chelem_player =
 
-    def callPlayer(self, taking_player):
+    def callPlayer(self):
         '''call King if there are 5 players'''
 
         nbPlayers = len(players)
         if nbPlayers == 5:
-            ...
-            self.called_player =
-            self.called_king =
+            self.called_king = getDecision(self.taking_player, "King", ['♠', '♥', '♣', '♦'])
+            self.called_player = 
+
 
     def createDog(self, deck):
         '''create dog with what remains of the deck'''
