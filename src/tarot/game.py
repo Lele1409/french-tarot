@@ -1,10 +1,14 @@
+from src.decision.decision import getDecision
+from src.tarot.player import Player
+
+
 class Game:
-    def __init__(self):
-        self.players: list[Player] = []
-        self.deck: list[Card] = []
+    def __init__(self, players=[Player], deck=[str], starting_player=Player):
+        self.players: list[Player] = players
+        self.deck: list[str] = deck
         self.dog: list[Card] = []
         self.aside: list[Card] = []
-        self.current_player: str = starting_player
+        self.current_player: str = starting_player  # TODO: put into match?
         self.tricks: list[Trick] = []
         self.contract_type: str = None
         self.taking_player: str = None
@@ -22,7 +26,7 @@ class Game:
         ... # TODO: deal cards
 
 
-    def chooseContract(self, current_player)
+    def chooseContract(self)
         """choose contract and put taking player in adequate categories"""
 
         contract_options = {"Pass": 0, "Small": 1, "Guard": 2, "Guard Without": 3, "Guard Against": 4}  # contract hierarchy: Pass < Small < Guard < Guard Without < Guard Against
