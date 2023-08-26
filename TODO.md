@@ -32,7 +32,7 @@
 - [ ] Game: (refer to rules-synthesis.md)
   - [ ] Deal cards
   - [ ] Choose contract (if none chosen: re-deal cards)
-  - [ ] Show dog (dependong of contract)
+  - [ ] Show the dog (depending on contract)
   - [ ] Dog to hand/aside (depending on contract)
   - [ ] Taking player creates his aside (depending on contract)
   - [ ] Taking player calls another player (if 5 players)
