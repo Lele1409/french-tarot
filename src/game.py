@@ -27,7 +27,9 @@ class Game:
 
         contract_options = {"Pass": 0, "Small": 1, "Guard": 2, "Guard Without": 3, "Guard Against": 4}  # contract hierarchy: Pass < Small < Guard < Guard Without < Guard Against
         for Player in players :
-            ... # TODO: choose contract
+
+            contrat=getDecision(Player.type,contract,contract_options)
+
         self.contract_type =
         if contract_type == "Pass":
             endGame()
