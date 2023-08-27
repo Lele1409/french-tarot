@@ -26,7 +26,44 @@ class Game:
 
 
     def dealCards(self, deck, players, current_player):
-        ... # TODO: deal cards
+        """
+        there are 78 cards in the deck
+
+        for a game of 5 players:
+            - you deal 15 cards/player
+            - the dog is composed of 3 cards
+            - there are 24 opportunities to put a card in the dog
+            - at each opportunity, you have 1/8 chances to put a card in the dog
+            - minimum amount of cards to have to distribute before putting a card in the dog at every opportunity = number of cards missing from dog x4
+            - nombre de carte minimum a avoir a distribuer avant de mettre une carte dans le chien a chaque opportunite = nb de carte restante a mettre dans le chien x4
+            - if there is 0 card in the dog and 12 cards left to deal, a card must be put in the dog at every opportunity
+            - if there is 1 card in the dog and 8 cards left to deal, a card must be put in the dog at every opportunity
+            - if there are 2 cards in the dog and 4 cards left to deal, a card must be put in the dog at every opportunity
+
+        for a game of 4 players:
+            - you deal 18 cards/player
+            - the dog is composed of 6 cards
+            - there are 23 opportunities to put a card in the dog
+            - if there is 0 card in the dog and 24 cards left to deal, a card must be put in the dog at every opportunity
+            - if there is 1 card in the dog and 20 cards left to deal, a card must be put in the dog at every opportunity
+            - if there are 2 cards in the dog and 16 cards left to deal, a card must be put in the dog at every opportunity
+            - if there are 3 cards in the dog and 12 cards left to deal, a card must be put in the dog at every opportunity
+            - if there are 4 cards in the dog and 8 cards left to deal, a card must be put in the dog at every opportunity
+            - if there are 5 cards in the dog and 4 cards left to deal, a card must be put in the dog at every opportunity
+
+        for a game of 3 players:
+            - you deal 24 cards/player
+            - the dog is composed of 6 cards
+            -- there are 23 opportunities to put a card in the dog
+            - if there is 0 card in the dog and 24 cards left to deal, a card must be put in the dog at every opportunity
+            - if there is 1 card in the dog and 20 cards left to deal, a card must be put in the dog at every opportunity
+            - if there are 2 cards in the dog and 16 cards left to deal, a card must be put in the dog at every opportunity
+            - if there are 3 cards in the dog and 12 cards left to deal, a card must be put in the dog at every opportunity
+            - if there are 4 cards in the dog and 8 cards left to deal, a card must be put in the dog at every opportunity
+            - if there are 5 cards in the dog and 4 cards left to deal, a card must be put in the dog at every opportunity
+        """
+
+        for # TODO: deal cards
 
 
     def chooseContract(self)
@@ -55,8 +92,24 @@ class Game:
 
         nbPlayers = len(self.players)
         if nbPlayers == 5:
-            self.called_king = getDecision(self.taking_player, "King", ['♠', '♥', '♣', '♦'])
-            self.called_player = 
+            return None
+
+        suits = ['♠', '♥', '♣', '♦']
+        for rank in ['K', 'Q', 'C', 'J']:
+            options = [rank + suit for suit in suits]
+            for card in self.taking_player.hand:
+                for option in options:
+                    if option == card :
+                        options.remove(option)
+            if not options:
+                options = [rank + suit for suit in suits]
+                break
+
+        self.called_king = getDecision(self.taking_player, "King", options)
+        for player in self.players:
+            for card in player.hand:
+                if card == self.called_king :
+                    self.called_player=player
 
 
     def createDog(self, deck):
