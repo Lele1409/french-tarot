@@ -3,13 +3,13 @@ from random import choice
 
 
 def getDecision(player: Player, decision_id: str, options: list[str]) -> str:
+    """"""
     behavior = player.behavior
 
     if behavior == 'random':
-        return choice(options)
-    elif behavior == 'real':
+        chosen_card = choice(options)
+        return chosen_card
+    if behavior == 'real':
         pass
-    elif behavior == 'ai':
+    if behavior == 'ai':
         pass
-
-

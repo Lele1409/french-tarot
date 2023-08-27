@@ -6,6 +6,8 @@ class Player:
     def __init__(self, behavior: str = 'random'):
         self._set_behavior(behavior)
 
+        self.hand: [str] = []
+
     def _set_behavior(self, behavior):
         """The player type can either be 'random,' 'real,' or 'AI'"""
         if behavior not in VALID_PLAYER_BEHAVIOR:

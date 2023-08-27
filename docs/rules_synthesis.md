@@ -126,5 +126,11 @@
 _(There is a formula in the mobile game French Tarot)_
 
 ## Official rules
-[Official link](https://www.fftarot.fr/assets/documents/R-RO201206.pdf), french source
-by the FFT
+[Official link—rules](https://www.fftarot.fr/assets/documents/R-RO201206.pdf)
+, french source by the FFT
+
+[Official link—rules 3 players](https://archive.wikiwix.com/cache/index2.php?url=http%3A%2F%2Ffftarot.fr%2Findex.php%2FDecouvrir%2FLe-Tarot-a-3-joueurs.html#federation=archive.wikiwix.com&tab=url)
+, french source by the FFT
+
+[Official link—rules 5 players](https://archive.wikiwix.com/cache/index2.php?url=http%3A%2F%2Ffftarot.fr%2Findex.php%2FDecouvrir%2FLe-Tarot-a-5-joueurs.html#federation=archive.wikiwix.com&tab=url)
+, french source by the FFT

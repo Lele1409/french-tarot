@@ -12,12 +12,6 @@ app = Flask(__name__,
             )
 
 
-@app.route('/tarot')
-def route_tarot():
-    """Redirect users from /tarot, to /tarot/game"""
-    return redirect('/tarot/game')
-
-
 @app.route('/tarot/game')
 def route_tarot_game():
     """Redirect users from /tarot/game, to the equivalent game.html file"""
@@ -25,18 +19,16 @@ def route_tarot_game():
 
 
 @app.route('/tarot/lobby')
-def route_tarot_lobby():
-    return "lobby"
-
-
-@app.route('/tarot/lobby/<id>')
 def route_tarot_lobby_id():
     """
     Redirect users from /tarot/lobby, to the equivalent lobby.html file.
-    Also connects the player to the websocket of the lobby with the specified <id>.
     """
     return redirect("/tarot/lobby.html")
 
+
+@app.route("/tarot/match/<match_id>")
+def route_tarot_match():
+    """"""
 
 def run_app():
     """Runs the app"""

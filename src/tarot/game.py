@@ -1,6 +1,9 @@
 from src.decision.decision import getDecision
 from src.tarot.player import Player
 
+DOG_SIZES = {3: 6, 4: 6, 5: 3}
+
+
 
 class Game:
     def __init__(self, players=[Player], deck=[str], starting_player=Player):
@@ -48,9 +51,9 @@ class Game:
         self.attack.append(self.taking_player)
 
     def callPlayer(self):
-        '''call King if there are 5 players'''
+        """call King if there are 5 players"""
 
-        nbPlayers = len(players)
+        nbPlayers = len(self.players)
         if nbPlayers == 5:
             self.called_king = getDecision(self.taking_player, "King", ['♠', '♥', '♣', '♦'])
             self.called_player = 
