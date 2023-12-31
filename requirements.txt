@@ -1,6 +1,2 @@
-pip>=23.1.2
-setuptools>=68.0.0
-wheel>=0.40.0
-
-numpy>=1.25.0
-matplotlib>=3.7.2
+Flask~=3.0.0
+Werkzeug~=3.0.1

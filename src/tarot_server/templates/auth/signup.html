@@ -1,0 +1,53 @@
+{% extends "auth/auth.html" %}
+
+{% block title %}
+    Signup
+{% endblock %}
+
+{%  block content %}
+    <form method="post">
+        <!-- Email -->
+        <label for="signup-standard-email">Email</label>
+        <input type="email"
+               id="signup-standard-email"
+               name="email"
+               placeholder="Enter email..."{% if entered_values %}
+               value="{{ entered_values['email'] }}"
+        {% endif %}
+        >
+        <label for="signup-standard-reenter-email">Re-enter email</label>
+        <input type="email"
+               id="signup-standard-reenter-email"
+               name="reenter-email"
+               placeholder="Re-enter email..."{% if entered_values %}
+               value="{{ entered_values['reenter-email'] }}"
+        {%  endif %}
+        >
+        <!-- Password -->
+        <label for="signup-standard-password">Password</label>
+        <input type="password"
+               id="signup-standard-password"
+               name="password"
+               placeholder="Enter password...">
+        <label for="signup-standard-reenter-password">Re-enter Password</label>
+        <input type="password"
+               id="signup-standard-reenter-password"
+               name="reenter-password"
+               placeholder="Re-enter password...">
+        <!-- Agreement -->
+        <br><br>and
+        <label for="signup-standard-input-agreement">Agree to everything</label>
+        <input type="checkbox"
+               id="signup-standard-input-agreement"
+               name="agreement"
+               {% if entered_values and entered_values['agreement'] == 'on' %}
+                    checked
+               {% endif %}
+        >
+        <!-- Submit -->
+        <br>
+        <button type="submit" name="signup-standard">Signup</button>
+        or
+        <button type="submit" name="signup-anonymous">Anonymous signup</button>
+    </form>
+{% endblock %}

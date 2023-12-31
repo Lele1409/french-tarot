@@ -1,0 +1,14 @@
+{% extends 'tarot_server_base.html' %}
+
+{% block title %}
+    Settings
+{% endblock %}
+
+{% block body %}
+    <div class="navbar">
+        <a id="logout" href="{{url_for('auth.logout')}}">Logout</a>
+        <a id="menu" href="{{ url_for('menu.menu') }}">Menu</a>
+    </div>
+
+    <h1>Settings</h1>
+{% endblock %}

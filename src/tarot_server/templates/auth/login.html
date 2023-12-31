@@ -1,0 +1,29 @@
+{% extends "auth/auth.html" %}
+
+{% block title %}
+    Login
+{% endblock %}
+
+{%  block content %}
+    <form method="post">
+        <!-- Email -->
+        <label for="login-email">Email address:</label>
+        <input type="email"
+               id="login-email"
+               name="email"
+               placeholder="Enter valid email address..."
+               {% if entered_values %}
+                    value="{{ entered_values['email'] }}"
+               {% endif %}
+        >
+        <!-- Password -->
+        <label for="login-password">Password:</label>
+        <input type="password"
+               id="login-password"
+               name="password"
+               placeholder="Enter your password...">
+        <!-- Submit -->
+        <button type="submit" name="login">Submit</button>
+        <!-- TODO: remember me button? -->
+    </form>
+{% endblock %}
