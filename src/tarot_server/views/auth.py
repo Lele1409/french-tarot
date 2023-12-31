@@ -2,7 +2,8 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user
 
 from src.tarot_server.utils.authentication import log_in, log_out, sign_up, \
-	validate_form_data_login, validate_form_data_signup
+	validate_form_data_signup
+from src.tarot_server.utils.forms import LoginForm
 
 views_auth = Blueprint('auth', 'tarot_server')
 
@@ -62,32 +63,11 @@ def signup():
 
 @views_auth.route('/login', methods=['GET', 'POST'])
 def login():
-	# When the user loads the page return the HTML
-	if request.method == 'GET':
-		# If the user is already logged in
-		if current_user.is_authenticated:
-			return redirect(url_for('menu.menu'))
-
-		return render_template('auth/login.html')
-
-	# Get data from submitted form
-	form_data = {
-		'email'   : request.form.get('email', ''),
-		'password': request.form.get('password', '')
-	}
-
-	error_message = validate_form_data_login(form_data)
-	if error_message:
-		flash(error_message, 'error')
-		# Do not send back the password
-		del form_data['password']
-		return render_template('auth/login.html', entered_values=form_data)
-
-	log_in(form_data['email'], form_data['password'])
-
-	# If the submitted data is valid and was processed, send the user to the
-	# homepage
-	return redirect(url_for('menu.menu'))
+	form = LoginForm()
+	if form.validate_on_submit():
+		log_in(form.email.data, form.password.data)
+		return redirect(url_for('menu.menu'))
+	return render_template('auth/login.html', form=form)
 
 
 @views_auth.route('/logout')
