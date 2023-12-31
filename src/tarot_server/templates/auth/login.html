@@ -6,14 +6,12 @@
 
 {%  block content %}
     {% if form.errors %}
-    <ul style="color: red">
         {% for error_list in form.errors.values() %}
             {%  for error in error_list %}
-                <li>{{ error }}</li>
+                {{ error }}
             {% endfor %}
         {% endfor %}
-    </ul>
-{% endif %}
+    {% endif %}
     <form method="POST">
         {{ form.hidden_tag() }}
 
