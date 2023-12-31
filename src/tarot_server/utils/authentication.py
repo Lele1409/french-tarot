@@ -3,6 +3,7 @@ from typing import Tuple
 from flask_login import login_user, logout_user
 from werkzeug.datastructures import ImmutableMultiDict
 from werkzeug.security import check_password_hash, generate_password_hash
+from wtforms.validators import ValidationError
 
 from src.tarot_server.db.gen_credentials import gen_id, gen_pw
 from src.tarot_server.db.roles import get_role_by_name
@@ -54,38 +55,17 @@ def validate_form_data_signup(form: dict[str, str]) -> str:
 	return error_message
 
 
-def validate_form_data_login(form: ImmutableMultiDict[str, str]) -> str:
-	"""Verifies that the form (for logging into an existing account) is valid
-	:arg form: the form to be validated in this function
-	:returns an empty string if the form is valid, otherwise the string
-	contains an error message"""
+def validate_login_form(form, field):
+	inputted_password: str = form.password.data
+	inputted_email: str = form.email.data
+	current_user: User = User.query.filter_by(email=inputted_email).first()
+	is_registered: bool = current_user is not None and current_user.email == inputted_email
+	if not is_registered:
+		raise ValidationError('Email or password is incorrect...')
+	is_correct_password: bool = check_password_hash(current_user.password, inputted_password)
+	if not is_correct_password:
+		raise ValidationError('Email or password is incorrect...')
 
-	if form['email'] == '' \
-			or form['password'] == '':
-		return 'Please fill in all the fields...'
-
-	if '@' not in form['email']:
-		return 'Please enter a valid email'
-
-	current_user = (User.query
-					.filter_by(email=form['email'])
-					.first())
-
-	if current_user is None:
-		return 'Account with this email has not been created: please signup first...'
-
-	is_email_in_db = current_user.email == form['email']
-
-	if not is_email_in_db:
-		return 'Account with this email has not been created: please signup first...'
-
-	is_right_password: bool = check_password_hash(current_user.password,
-												  form['password'])
-
-	if not is_right_password:
-		return 'Data invalid, please try again...'
-
-	return ''
 
 
 def sign_up(email: str | None,

@@ -11,12 +11,21 @@ from flask_user import UserManager
 from src.config.appConfig import AppConfigFlaskUser
 from src.config.configLoader import config_tarot_server
 
+# TODO: refactor file to have configuration all in one place, and different
+#  functions for different steps of the app creation in their own
+
+# TODO: set a instance path (where the DB will be stored)
 # Instantiate the application and configure
 app_tarot_server = Flask('tarot_server',
 						 template_folder=os.path.abspath(
 							 r'./tarot_server/templates')
 						 )
-app_tarot_server.config['SECRET_KEY'] = os.environ.get('APP_TAROT_SERVER_SECRET_KEY')
+
+# Set the secret keys
+app_tarot_server.config['SECRET_KEY'] = \
+	os.environ.get('APP_TAROT_SERVER_SECRET_KEY')
+app_tarot_server.config['WTF_CSRF_SECRET_KEY'] = \
+	os.environ.get('APP_TAROT_SERVER_CSRF_SECRET_KEY')
 
 # Instantiate the websockets
 socketio = SocketIO(app_tarot_server)
