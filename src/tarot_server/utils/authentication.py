@@ -1,7 +1,6 @@
 from typing import Tuple
 
 from flask_login import login_user, logout_user
-from werkzeug.datastructures import ImmutableMultiDict
 from werkzeug.security import check_password_hash, generate_password_hash
 from wtforms.validators import ValidationError
 
@@ -11,71 +10,27 @@ from src.tarot_server.server import tarot_server_db
 from src.tarot_server.db.models import User
 
 
-def validate_form_data_signup(form: dict[str, str]) -> str:
-	"""Verifies that the form is valid, and if not, defines the error message
-	to be shown to the user.
-	:arg form: The form to be validated in this function
-	:returns an empty string if the form is valid, otherwise the string
-	contains an error message"""
-
-	error_message = ''
-
-	# First check if the user ticked the agree box,
-	# any other error will overwrite this one
-	if form['agreement'] != 'on':
-		error_message = 'Please agree...'
-
-	# Check for other errors
-	if form['signup-anonymous'] == '':
-		if form['signup-standard'] == '':
-			error_message = 'Please choose only one signup method...'
-	elif form['signup-standard'] != '':
-		error_message = 'Please choose any signup method...'
-	elif form['email'] == '' \
-			or form['reenter-email'] == '' \
-			or form['password'] == '' \
-			or form['reenter-password'] == '':
-		error_message = 'Please fill in all the fields...'
-	elif form['email'] != form['reenter-email']:
-		error_message = 'Email addresses do not match...'
-	elif form['password'] != form['reenter-password']:
-		error_message = 'Passwords do not match...'
-
-	# Check if email is a valid email
-	# and if the password is a secure password  # TODO
-
-	# Check if email already exists
-	if form['signup-standard'] == '' and \
-			(tarot_server_db.session
-					 .query(User)
-					 .filter_by(email=form['email'])
-					 .first().email == form['email']):
-		error_message = 'Email already registered, please login...'
-
-	return error_message
-
-
-def validate_login_form(form, field):
+def validate_login_form_data(form, field):
 	inputted_password: str = form.password.data
 	inputted_email: str = form.email.data
 	current_user: User = User.query.filter_by(email=inputted_email).first()
 	is_registered: bool = current_user is not None and current_user.email == inputted_email
 	if not is_registered:
 		raise ValidationError('Email or password is incorrect...')
-	is_correct_password: bool = check_password_hash(current_user.password, inputted_password)
+	is_correct_password: bool = check_password_hash(current_user.password,
+													inputted_password)
 	if not is_correct_password:
 		raise ValidationError('Email or password is incorrect...')
-
 
 
 def sign_up(email: str | None,
 			password: str | None,
 			anon: bool = False) -> Tuple[str, str] | None:
 	"""Signs up a newly created user.
-	:arg email: The email to be used for creating the account;
-	:arg password: The password provided for creating the account, will be
+	:param email: The email to be used for creating the account;
+	:param password: The password provided for creating the account, will be
 	 stored as a scrypt hash;
-	:arg anon: If True, creates an anonymous account discarding any email or
+	:param anon: If True, creates an anonymous account discarding any email or
 	 password given."""
 
 	# Get a unique id for the account
@@ -86,7 +41,8 @@ def sign_up(email: str | None,
 		upw = gen_pw()
 		user_new = User(id=uid, email=uid, password=upw)
 		# Set the user's role
-		user_new.roles.append(get_role_by_name('anonymous'))  # TODO: can be removed?
+		user_new.roles.append(
+			get_role_by_name('anonymous'))  # TODO: can be removed?
 
 	# Creating a standard account
 	else:
@@ -96,7 +52,8 @@ def sign_up(email: str | None,
 		hashed_password = generate_password_hash(password)
 		user_new = User(id=uid, email=email, password=hashed_password)
 		# Set the user's role
-		user_new.roles.append(get_role_by_name('standard'))  # TODO: can be removed?
+		user_new.roles.append(
+			get_role_by_name('standard'))  # TODO: can be removed?
 
 	# Submit the data to the database
 	tarot_server_db.session.add(user_new)

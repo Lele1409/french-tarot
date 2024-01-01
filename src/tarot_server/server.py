@@ -14,7 +14,7 @@ from src.config.configLoader import config_tarot_server
 # TODO: refactor file to have configuration all in one place, and different
 #  functions for different steps of the app creation in their own
 
-# TODO: set a instance path (where the DB will be stored)
+# TODO: set a new instance path (where the DB will be stored)
 # Instantiate the application and configure
 app_tarot_server = Flask('tarot_server',
 						 template_folder=os.path.abspath(

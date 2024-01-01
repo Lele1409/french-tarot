@@ -1,32 +1,39 @@
 {% extends "tarot_server_base.html" %}
 
+{% import 'macros/form_errors.j2' as form_errors %}
+
 {% block head %}{% endblock %}
 
 {% block body %}
     {% block navbar %}
         <div id="navbar">
             <a id="login" href="{{url_for('auth.login')}}">Login</a>
-            <a id="login" href="{{url_for('auth.signup')}}">Signup</a>
+            <a id="signup" href="{{url_for('auth.signup')}}">Signup</a>
         </div>
     {%  endblock %}
-    <!-- Start flashed messages-->
-    {% block flashes %}
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    {% if category == 'error' %}
-                        <div style="color: red">
-                            {{ message }}
-                        </div>
-                    {% elif category == 'success' %}
-                        <div style="color: green">
-                            {{ message }}
-                        </div>
-                    {% endif %}
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-    {% endblock %}
-    <!-- End flashed messages -->
+
+    {{ form_errors.display_first_value(form.errors) }}
+
     {% block content %}{% endblock %}
+
+    <script type="text/javascript">
+    // Get the form element by its ID
+    const form = document.getElementById('signup-form');
+
+    // Check if the form exists
+    if (form) {
+      // Get all form elements
+      const formElements = form.elements;
+
+      // Loop over each form element
+      for (let i = 0; i < formElements.length; i++) {
+        // Remove the 'required' attribute from each element
+        formElements[i].removeAttribute('required');
+      }
+
+      console.log('Required attribute removed from all form elements.');
+    } else {
+      console.error('Form not found.');
+    }
+    </script>
 {% endblock %}

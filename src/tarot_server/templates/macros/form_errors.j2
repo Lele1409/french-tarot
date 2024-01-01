@@ -1,0 +1,17 @@
+{% macro display_first_value(nested_dict) %}
+    {% set a = namespace(value=True) %}
+    {% for key, value in nested_dict.items() %}
+        {% if value is mapping %}
+            {{ display_first_value(value) }}
+        {% else %}
+            {% if a.value == True %}
+                {% set a.value = False %}
+                {% if value.__class__.__name__ == 'list' %}
+                    {{ value[0] }}
+                {% else %}
+                    {{ value }}
+                {% endif %}
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+{% endmacro %}

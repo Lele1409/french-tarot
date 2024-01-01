@@ -4,14 +4,7 @@
     Login
 {% endblock %}
 
-{%  block content %}
-    {% if form.errors %}
-        {% for error_list in form.errors.values() %}
-            {%  for error in error_list %}
-                {{ error }}
-            {% endfor %}
-        {% endfor %}
-    {% endif %}
+{% block content %}
     <form method="POST">
         {{ form.hidden_tag() }}
 
