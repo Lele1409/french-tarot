@@ -53,8 +53,8 @@ class ValidLoginData:
 		self.message = message
 
 	def __call__(self, form, field):
-		inputted_email = form.email
-		inputted_password = form.password
+		inputted_email = form.email.data
+		inputted_password = form.password.data
 
 		current_user: User = User.query.filter_by(email=inputted_email).first()
 		is_registered: bool = \
