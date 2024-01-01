@@ -170,7 +170,7 @@ class SignupStandardForm(FlaskForm):
 				'[a-zA-Z0-9_' + SAFE_SPECIAL_CHARS + '@.' + ']',
 				message=f'Please only use letters, numbers and {SAFE_SPECIAL_CHARS}'),
 			EmailNotInUse(
-				'Email address is already registered, please sign in...')
+				'Email address is already registered, please log in...')
 		]
 	)
 	reenter_email = StringField(

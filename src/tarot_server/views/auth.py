@@ -15,13 +15,13 @@ def signup():
 		if 'anon_signup-submit_anon' in request.form and \
 				signup_form.anon_signup.validate(signup_form):
 			sign_up(None, None, anon=True)
-			return redirect(url_for('/anon-signup'))
+			return redirect(url_for('menu.menu'))
 
 		elif 'standard_signup-submit_standard' in request.form and \
 				signup_form.standard_signup.validate(signup_form):
 			sign_up(signup_form.standard_signup.email.data,
 					signup_form.standard_signup.password.data)
-			return redirect(url_for('/normal-signup'))
+			return redirect(url_for('auth.login'))
 	return render_template('auth/signup.html', form=signup_form)
 
 
