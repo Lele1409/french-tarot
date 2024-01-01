@@ -75,10 +75,11 @@ class UserRoles(db.Model):
 	id = db.Column(db.Integer(),
 				   primary_key=True,
 				   unique=True,
+				   nullable=False,
 				   autoincrement=True)
 
 	# User and connected role
-	user_id = db.Column(db.Integer(),
+	user_id = db.Column(db.String(64),
 						db.ForeignKey('users.id', ondelete='CASCADE'),
 						nullable=False)
 	role_id = db.Column(db.Integer(),

@@ -1,3 +1,5 @@
+from typing import Tuple
+
 from flask_login import login_user, logout_user
 from werkzeug.security import generate_password_hash
 
@@ -9,7 +11,7 @@ from src.tarot_server.server import tarot_server_db
 
 def sign_up(email: str | None,
 			password: str | None,
-			anon: bool = False):
+			anon: bool = False) -> Tuple[str, str] | None:
 	"""Signs up a newly created user.
 	:param email: The email to be used for creating the account;
 	:param password: The password provided for creating the account, will be
@@ -33,13 +35,17 @@ def sign_up(email: str | None,
 		# using scrypt; during later login requests this hash can be validated
 		# through the use of werkzeug.security.check_password_hash()
 		hashed_password = generate_password_hash(password)
-		user_new = User(id=uid, email=email, password=hashed_password)
+		user_new = User(id=str(uid), email=email, password=hashed_password)
 		# Set the user's role
 		user_new.roles.append(get_role_by_name('standard'))
 
 	# Submit the data to the database
 	tarot_server_db.session.add(user_new)
 	tarot_server_db.session.commit()
+
+	# Returns created values for reuse during login if signup was
+	# for an anonymous user
+	return (uid, upw) if anon else None
 
 
 def log_in(email: str):

@@ -14,7 +14,8 @@ def signup():
 			signup_form.agreements.validate(signup_form):
 		if 'anon_signup-submit_anon' in request.form and \
 				signup_form.anon_signup.validate(signup_form):
-			sign_up(None, None, anon=True)
+			e, p = sign_up(None, None, anon=True)
+			log_in(e)
 			return redirect(url_for('menu.menu'))
 
 		elif 'standard_signup-submit_standard' in request.form and \

@@ -10,7 +10,7 @@ from wtforms.validators import Email, EqualTo, InputRequired, Optional, \
 	Regexp, ValidationError
 
 from src.config import configLoader
-from src.tarot_server.db.models import User, UserRoles
+from src.tarot_server.db.models import User
 from src.tarot_server.utils.string_manip import count_any_occurrence as c_a_o
 
 SAFE_SPECIAL_CHARS = configLoader.config_tarot_server['Credentials']['safe_special_chars']
@@ -57,21 +57,19 @@ class ValidLoginData:
 		inputted_password = form.password.data
 
 		current_user: User = User.query.filter_by(email=inputted_email).first()
-		is_registered: bool = \
-			current_user is not None and current_user.email == inputted_email
+		is_registered: bool = (current_user is not None
+			 				   and current_user.email == inputted_email)
 
-		if is_registered:
+		if not is_registered:
 			raise ValidationError(self.message)
 
-		is_anonymous_user: bool = \
-			UserRoles.query.filter_by(
-				user_id=current_user.id).first() is not None
+		is_anonymous_user: bool = current_user.has_roles('anonymous')
 
 		if is_anonymous_user:
 			raise ValidationError(self.message)
 
-		is_correct_password: bool = \
-			check_password_hash(current_user.password, inputted_password)
+		is_correct_password: bool = check_password_hash(current_user.password,
+														inputted_password)
 
 		if not is_correct_password:
 			raise ValidationError(self.message)
