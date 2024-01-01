@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block content %}
-    <form method="POST">
+    <form method="POST" class="remove-required-tag">
         {{ form.hidden_tag() }}
 
         {{ form.email.label }}

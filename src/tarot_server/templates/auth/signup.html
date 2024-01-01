@@ -4,8 +4,8 @@
     Signup
 {% endblock %}
 
-{%  block content %}
-    <form method="post" id="signup-form">
+{% block content %}
+    <form method="post" class="remove-required-tag">
         {{ form.hidden_tag() }}
         {{ form.standard_signup.hidden_tag() }}
         {{ form.anon_signup.hidden_tag() }}

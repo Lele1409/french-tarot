@@ -10,6 +10,7 @@ from flask_user import UserManager
 
 from src.config.appConfig import AppConfigFlaskUser
 from src.config.configLoader import config_tarot_server
+from src.tarot_server.views.errors import views_errors
 
 # TODO: refactor file to have configuration all in one place, and different
 #  functions for different steps of the app creation in their own
@@ -75,6 +76,7 @@ def run_tarot_server() -> None:
 	app_tarot_server.register_blueprint(views_auth)
 	app_tarot_server.register_blueprint(views_menu)
 	app_tarot_server.register_blueprint(views_settings)
+	app_tarot_server.register_blueprint(views_errors)
 
 	# Disable Flask-Mail
 	app_tarot_server.config['USER_EMAIL_SENDER_EMAIL'] = 'no-reply@localhost'

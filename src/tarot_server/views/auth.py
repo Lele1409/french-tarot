@@ -6,6 +6,9 @@ from src.tarot_server.utils.forms import LoginForm, SignupForm
 views_auth = Blueprint('auth', 'tarot_server')
 
 
+# TODO: auto-redirect if already logged in
+
+
 @views_auth.route('/signup', methods=['GET', 'POST'])
 def signup():
 	signup_form = SignupForm()

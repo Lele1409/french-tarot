@@ -17,23 +17,19 @@
     {% block content %}{% endblock %}
 
     <script type="text/javascript">
-    // Get the form element by its ID
-    const form = document.getElementById('signup-form');
+        // Get the form element by its ID
+        const form = document.getElementsByClassName('remove-required-tag')[0];
 
-    // Check if the form exists
-    if (form) {
-      // Get all form elements
-      const formElements = form.elements;
+        // Check if the form exists
+        if (form) {
+            // Get all form elements
+            const formElements = form.elements;
 
-      // Loop over each form element
-      for (let i = 0; i < formElements.length; i++) {
-        // Remove the 'required' attribute from each element
-        formElements[i].removeAttribute('required');
-      }
-
-      console.log('Required attribute removed from all form elements.');
-    } else {
-      console.error('Form not found.');
-    }
+            // Loop over each form element
+            for (let i = 0; i < formElements.length; i++) {
+                // Remove the 'required' attribute from each element
+                formElements[i].removeAttribute('required');
+            }
+        }
     </script>
 {% endblock %}
