@@ -27,9 +27,10 @@ def gen_id() -> int:
 	 integer will be shorter than specified"""
 
 	resulting_string = '0'
-	while not id_can_be_used(resulting_string) or resulting_string.startswith('0'):
+	while not id_can_be_used(resulting_string) or \
+			resulting_string.startswith('0'):
 		id_number_len: int = \
-			int(config_tarot_server['Generated_credentials']['ID.Num_Len'])
+			int(config_tarot_server['Credentials.Generation']['ID.Num_Len'])
 		id_numbers: list = \
 			[random.choice(string.digits) for _ in range(id_number_len)]
 		resulting_string: str = ''.join(id_numbers)
@@ -40,7 +41,7 @@ def gen_pw() -> str:
 	"""Generates a random string of letters and digits.
 	:returns: A string with a length specified in the server config"""
 	chars: str = string.ascii_letters + string.digits
-	pw_len: int = int(config_tarot_server['Generated_credentials']['PW.Char_Len'])
+	pw_len: int = int(config_tarot_server['Credentials.Generation']['PW.Char_Len'])
 	random_chars: list = [random.choice(chars) for _ in range(pw_len)]
 	resulting_string: str = ''.join(random_chars)
 	return resulting_string

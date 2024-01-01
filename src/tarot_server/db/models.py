@@ -1,6 +1,6 @@
-from src.tarot_server.server import tarot_server_db as db
-
 from flask_user import UserMixin
+
+from src.tarot_server.server import tarot_server_db as db
 
 
 class User(db.Model, UserMixin):
@@ -15,8 +15,10 @@ class User(db.Model, UserMixin):
 	__tablename__ = 'users'
 
 	# Identifier
-	id = db.Column(db.Integer(),
-				   primary_key=True)
+	id = db.Column(db.String(64),
+				   primary_key=True,
+				   nullable=False,
+				   unique=True)
 
 	# User Authentication fields
 	email = db.Column(db.String(255),
@@ -25,8 +27,10 @@ class User(db.Model, UserMixin):
 	# TODO: add email_verification
 	# email_confirmed_at = db.Column(db.DateTime())
 	# TODO: add username
-	# verification username = db.Column(db.String(50), nullable=False, unique=True)
-	password = db.Column(db.String(255),
+	# verification username = db.Column(db.String(50),
+	# 									nullable=False,
+	# 									unique=True)
+	password = db.Column(db.String(128),
 						 nullable=False)
 
 	# User Authentication meta-fields
@@ -38,6 +42,7 @@ class User(db.Model, UserMixin):
 							secondary='user_roles')
 
 	# TODO: Keep? https://flask-user.readthedocs.io/en/latest/data_models.html
+	#  Yes for deactivating anon users?
 	# active = db.Column(db.Boolean())
 
 

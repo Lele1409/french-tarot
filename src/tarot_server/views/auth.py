@@ -10,16 +10,18 @@ views_auth = Blueprint('auth', 'tarot_server')
 def signup():
 	signup_form = SignupForm()
 
-	if signup_form.is_submitted() and signup_form.agreements.validate(signup_form):
+	if signup_form.is_submitted() and \
+			signup_form.agreements.validate(signup_form):
 		if 'anon_signup-submit_anon' in request.form and \
-			signup_form.anon_signup.validate(signup_form):
+				signup_form.anon_signup.validate(signup_form):
+			sign_up(None, None, anon=True)
 			return redirect(url_for('/anon-signup'))
-			sign_up()
 
 		elif 'standard_signup-submit_standard' in request.form and \
-			signup_form.standard_signup.validate(signup_form):
+				signup_form.standard_signup.validate(signup_form):
+			sign_up(signup_form.standard_signup.email.data,
+					signup_form.standard_signup.password.data)
 			return redirect(url_for('/normal-signup'))
-			sign_up(signup_form.email.data, signup_form.password.data)
 	return render_template('auth/signup.html', form=signup_form)
 
 
@@ -27,7 +29,8 @@ def signup():
 def login():
 	login_form = LoginForm()
 	if login_form.validate_on_submit():
-		log_in(login_form.email.data, login_form.password.data)
+		# Login the user of which the login information has been verified
+		log_in(login_form.email.data)
 		return redirect(url_for('menu.menu'))
 	return render_template('auth/login.html', form=login_form)
 

@@ -49,7 +49,7 @@ def run_tarot_server() -> None:
 	#    and searching for the file.
 	# First, we need to import the model classes because otherwise
 	# the tables are not created in the database
-	from src.tarot_server.db.models import User, Role, UserRoles
+	from src.tarot_server.db.models import User, Role, UserRoles  # NOQA
 	if not os.path.exists('instance/' + db_name):
 
 		# Create the file with the given context
@@ -81,7 +81,7 @@ def run_tarot_server() -> None:
 
 	# Add a user manager
 	app_tarot_server.config.from_object(AppConfigFlaskUser)
-	app_tarot_user_manager = UserManager(app_tarot_server, tarot_server_db, User)
+	UserManager(app_tarot_server, tarot_server_db, User)
 
 	# Run the server with websocket-capability
 	socketio.run(

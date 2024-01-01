@@ -2,6 +2,9 @@
 With the use of overwrite_config_dir also allows you to override the
 path where the config gets stored."""
 
+# TODO: add verification for config checking that all values that are
+#  in the config are also valid for their purpose
+
 import configparser
 import os
 from typing import AnyStr
@@ -18,7 +21,8 @@ config_tarot_game: configparser.ConfigParser | None = None
 
 def overwrite_config_dir(path=DEFAULT_CONFIG_DIR_PATH) -> bool:
 	"""Set where the config file is loaded from.
-	:param path: Path pointing to the config file (consider using an absolute path)
+	:param path: Path pointing to the config file
+	 (consider using an absolute path)
 	:returns True if all config files were found, False otherwise"""
 
 	# Set new directory

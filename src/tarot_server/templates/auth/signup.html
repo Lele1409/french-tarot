@@ -5,22 +5,22 @@
 {% endblock %}
 
 {%  block content %}
-    <form method="post" id="signup-form">  <!-- TODO: can you render a form only with {{ form }} ? -->
+    <form method="post" id="signup-form">
         {{ form.hidden_tag() }}
         {{ form.standard_signup.hidden_tag() }}
         {{ form.anon_signup.hidden_tag() }}
 
         {{ form.standard_signup.email.label }}
-        {{ form.standard_signup.email() }}
+        {{ form.standard_signup.email(placeholder="Email") }}
 
         {{ form.standard_signup.reenter_email.label }}
-        {{ form.standard_signup.reenter_email() }}
+        {{ form.standard_signup.reenter_email(placeholder="Reenter email") }}
 
         {{ form.standard_signup.password.label }}
-        {{ form.standard_signup.password() }}
+        {{ form.standard_signup.password(placeholder="Password") }}
 
         {{ form.standard_signup.reenter_password.label }}
-        {{ form.standard_signup.reenter_password() }}
+        {{ form.standard_signup.reenter_password(placeholder="Reenter password") }}
 
         {{ form.agreements.label }}
         {{ form.agreements() }}
@@ -28,6 +28,4 @@
         {{ form.standard_signup.submit_standard() }}
         {{ form.anon_signup.submit_anon() }}
     </form>
-
-    <!-- TODO: move script to auth -->
 {% endblock %}

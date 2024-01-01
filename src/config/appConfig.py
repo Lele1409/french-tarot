@@ -1,7 +1,8 @@
 class AppConfigFlaskUser(object):
 	"""Configures mainly Flask-User and Flask-Mail.
-	Currently, this config disables most of the routes and most of the functionalities in general but
-	it is kept in for later use"""
+	Currently, this config disables most of the default routes and
+	most of the default functionality in Flask-User,
+	but it is kept in for later potential use."""
 	USER_APP_NAME = ("French-Tarot (though if you see this in the app I guess "
 					 "there was an error)")
 	USER_ENABLE_EMAIL = True
@@ -9,7 +10,7 @@ class AppConfigFlaskUser(object):
 	USER_ENABLE_CHANGE_PASSWORD = False
 	USER_ENABLE_CONFIRM_EMAIL = False
 	USER_ENABLE_FORGOT_PASSWORD = False
-	USER_ALLOW_LOGIN_WITHOUT_CONFIRMED_EMAIL = False
+	USER_ALLOW_LOGIN_WITHOUT_CONFIRMED_EMAIL = True
 	USER_USER_SESSION_EXPIRATION = 36000
 
 	USER_CHANGE_PASSWORD_URL = '/not-implemented'
