@@ -1,4 +1,5 @@
 from flask import Blueprint, redirect, render_template, request, url_for
+from flask_login import current_user
 
 from src.tarot_server.utils.authentication import log_in, log_out, sign_up
 from src.tarot_server.utils.forms import LoginForm, SignupForm
@@ -11,6 +12,9 @@ views_auth = Blueprint('auth', 'tarot_server')
 
 @views_auth.route('/signup', methods=['GET', 'POST'])
 def signup():
+	if current_user.is_authenticated:
+		return redirect(url_for('menu.menu'))
+
 	signup_form = SignupForm()
 
 	if signup_form.is_submitted() and \
@@ -31,6 +35,9 @@ def signup():
 
 @views_auth.route('/login', methods=['GET', 'POST'])
 def login():
+	if current_user.is_authenticated:
+		return redirect(url_for('menu.menu'))
+
 	login_form = LoginForm()
 	if login_form.validate_on_submit():
 		# Login the user of which the login information has been verified

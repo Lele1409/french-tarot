@@ -22,8 +22,12 @@
         {{ form.standard_signup.reenter_password.label }}
         {{ form.standard_signup.reenter_password(placeholder="Reenter password") }}
 
+        <br><br>
+
         {{ form.agreements.label }}
         {{ form.agreements() }}
+
+        <br><br>
 
         {{ form.standard_signup.submit_standard() }}
         {{ form.anon_signup.submit_anon() }}

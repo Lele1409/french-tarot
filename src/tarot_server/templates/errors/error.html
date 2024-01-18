@@ -1,0 +1,15 @@
+{% extends "tarot_server_base.html" %}
+
+{% block title %}
+    ERROR
+    {% block error_n %}{% endblock %}
+{% endblock %}
+
+{% block body %}
+    {%  block content %}{%  endblock %}
+
+    {% block error_return %}
+        <br><br><br>
+        <a style="color: #0101ac" href="{{ url_for('redirect.root') }}"> <- Return <- </a>
+    {% endblock %}
+{% endblock %}

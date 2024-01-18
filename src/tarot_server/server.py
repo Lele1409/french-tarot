@@ -12,7 +12,7 @@ from src.config.appConfig import AppConfigFlaskUser
 from src.config.configLoader import config_tarot_server
 from src.tarot_server.views.errors import views_errors
 
-# TODO: refactor file to have configuration all in one place, and different
+# TODO: refactor file to have configuration all in one folder, and different
 #  functions for different steps of the app creation in their own
 
 # TODO: set a new instance path (where the DB will be stored)
