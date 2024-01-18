@@ -1,5 +1,7 @@
 {% extends "tarot_server_base.html" %}
 
+{% import 'macros/form_errors.j2' as form_errors %}
+
 {% block title %}
     Menu
 {% endblock %}
@@ -14,6 +16,9 @@
     <h1>Menu</h1>
 
     <h2>Game!!!</h2>
+    <div class="form-errors">
+        {{ form_errors.display_first_value(forms['LobbyJoin'].errors) }}
+    </div>
     <form method="post">
         {{ forms['LobbyJoin'].hidden_tag() }}
 
@@ -23,7 +28,13 @@
         {{ forms['LobbyJoin'].submit_join.label }}
         {{ forms['LobbyJoin'].submit_join(placeholder="Join") }}
     </form>
+    <br>
     or
+    <br>
+    <br>
+    <div class="form-errors">
+        {{ form_errors.display_first_value(forms['LobbyCreate'].errors) }}
+    </div>
     <form method="post">
         {{ forms['LobbyCreate'].hidden_tag() }}
 

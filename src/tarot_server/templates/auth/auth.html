@@ -12,7 +12,9 @@
         </div>
     {%  endblock %}
 
-    {{ form_errors.display_first_value(form.errors) }}
+    <div class="form-errors">
+        {{ form_errors.display_first_value(form.errors) }}
+    </div>
 
     {% block content %}{% endblock %}
 
