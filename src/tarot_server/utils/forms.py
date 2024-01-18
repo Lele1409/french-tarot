@@ -223,7 +223,10 @@ class SignupForm(FlaskForm):
 
 class LobbyJoinForm(FlaskForm):
 	code = StringField(
-		validators=[InputRequired('Please enter a code...')]
+		validators=[
+			InputRequired('Please enter a code...'),
+			Regexp('[0-9A-F]{8}',
+				   message="Please enter a valid code...")]
 	)
 
 	submit_join = SubmitField(

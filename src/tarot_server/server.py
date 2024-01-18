@@ -20,8 +20,7 @@ app_tarot_server = Flask('tarot_server',
 							 r'./tarot_server/templates'),
 						 instance_path=os.path.abspath(
 							 r'./tarot_server/instance'
-						 )
-						 )
+						 ))
 
 # Set the secret keys
 app_tarot_server.config['SECRET_KEY'] = \
