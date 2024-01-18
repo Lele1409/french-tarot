@@ -16,7 +16,7 @@
     <h2>Game!!!</h2>
     <form method="post">
         {{ forms['LobbyJoin'].code.label }}
-        {{ forms['LobbyJoin'].code }}
+        {{ forms['LobbyJoin'].code(placeholder="Enter lobby code") }}
 
         {{ forms['LobbyJoin'].submit_join.label }}
         {{ forms['LobbyJoin'].submit_join(placeholder="Join") }}
