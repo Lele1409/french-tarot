@@ -7,3 +7,6 @@ from src.tarot_server.server import run_tarot_server
 
 if __name__ == "__main__":
 	run_tarot_server()
+
+# TODO: rename everything called anon(ymous) user to temp(orary)
+#       to better reflect its use, as opposed to its implementation

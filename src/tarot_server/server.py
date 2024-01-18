@@ -10,12 +10,10 @@ from flask_user import UserManager
 
 from src.config.appConfig import AppConfigFlaskUser
 from src.config.configLoader import config_tarot_server
-from src.tarot_server.views.errors import views_errors
 
 # TODO: refactor file to have configuration all in one folder, and different
 #  functions for different steps of the app creation in their own
 
-# TODO: set a new instance path (where the DB will be stored)
 # Instantiate the application and configure
 app_tarot_server = Flask('tarot_server',
 						 template_folder=os.path.abspath(
@@ -74,12 +72,15 @@ def run_tarot_server() -> None:
 	from src.tarot_server.views.redirect import views_redirect
 	from src.tarot_server.views.menu import views_menu
 	from src.tarot_server.views.settings import views_settings
+	from src.tarot_server.views.errors import views_errors
+	from src.tarot_server.views.lobby import views_lobby
 
 	app_tarot_server.register_blueprint(views_redirect)
 	app_tarot_server.register_blueprint(views_auth)
 	app_tarot_server.register_blueprint(views_menu)
 	app_tarot_server.register_blueprint(views_settings)
 	app_tarot_server.register_blueprint(views_errors)
+	app_tarot_server.register_blueprint(views_lobby)
 
 	# Disable Flask-Mail
 	app_tarot_server.config['USER_EMAIL_SENDER_EMAIL'] = 'no-reply@localhost'

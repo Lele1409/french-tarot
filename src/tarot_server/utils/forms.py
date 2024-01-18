@@ -219,3 +219,21 @@ class SignupForm(FlaskForm):
 		'Agreements',
 		validators=[InputRequired('To proceed, please agree...')]
 	)
+
+
+class LobbyJoinForm(FlaskForm):
+	code = StringField(
+		validators=[InputRequired('Please enter a code...')]
+	)
+
+	submit_join = SubmitField(
+		'Join lobby with code',
+		validators=[InputRequired('Please submit...')]
+	)
+
+
+class LobbyCreateForm(FlaskForm):
+	submit_create = SubmitField(
+		'Create lobby',
+		validators=[InputRequired('Please submit...')]
+	)

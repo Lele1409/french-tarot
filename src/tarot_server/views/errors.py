@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template
 
-views_errors = Blueprint('error', 'tarot_server')
+views_errors = Blueprint('errors', 'tarot_server')
 
 
 @views_errors.app_errorhandler(403)

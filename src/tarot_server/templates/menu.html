@@ -8,30 +8,22 @@
     <div class="navbar">
         <a id="logout" href="{{url_for('auth.logout')}}">Logout</a>
         <a id="settings" href="{{ url_for('settings.settings') }}">Settings</a>
+        <a id="userSearch" href="{{ url_for('redirect.users') }}">UserSearch</a>
     </div>
 
     <h1>Menu</h1>
 
     <h2>Game!!!</h2>
     <form method="post">
-        <label for="room-id">Room ID:</label>
-        <input type="number"
-               id="room-id"
-               name="room-id"
-               placeholder="Room id...">
-        <button type="submit" name="join-game"
-        >Join game with id</button>
+        {{ forms['LobbyJoin'].code.label }}
+        {{ forms['LobbyJoin'].code }}
+
+        {{ forms['LobbyJoin'].submit_join.label }}
+        {{ forms['LobbyJoin'].submit_join(placeholder="Join") }}
     </form>
     or
     <form method="post">
-        <button type="submit" name="create-game">Create game</button>
+        {{ forms['LobbyCreate'].submit_create.label }}
+        {{ forms['LobbyCreate'].submit_create(placeholder="Create") }}
     </form>
-
-    <h2>User pages</h2>
-    <form method="post">
-        <label for="go-username">Username:</label>
-        <input type="text" id="go-username" name="username" placeholder="Search username...">
-        <button type="submit" name="search-user">Search user</button>
-    </form>
-
 {% endblock %}
