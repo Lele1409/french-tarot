@@ -9,11 +9,12 @@ from wtforms.fields.simple import BooleanField, PasswordField, StringField, \
 from wtforms.validators import Email, EqualTo, InputRequired, Optional, \
 	Regexp, ValidationError
 
-from src.config import configLoader
+from src.config.configLoader import config_tarot_server as config
 from src.tarot_server.db.models import User
 from src.tarot_server.utils.string_manip import count_any_occurrence as c_a_o
 
-SAFE_SPECIAL_CHARS = configLoader.config_tarot_server['Credentials']['safe_special_chars']
+SAFE_SPECIAL_CHARS = config['Credentials'][
+	'safe_special_chars']
 
 
 class NotEqualTo(object):
@@ -58,7 +59,7 @@ class ValidLoginData:
 
 		current_user: User = User.query.filter_by(email=inputted_email).first()
 		is_registered: bool = (current_user is not None
-			 				   and current_user.email == inputted_email)
+							   and current_user.email == inputted_email)
 
 		if not is_registered:
 			raise ValidationError(self.message)
@@ -87,23 +88,25 @@ class EmailNotInUse:
 class SecurePassword:
 	def __init__(self):
 		# Load values from the config
-		config = configLoader.config_tarot_server['Credentials.Submitted']
-		self.min_length = int(config['min_length'])
-		self.max_length = int(config['max_length'])
-		self.min_lower_chars = int(config['min_lower_chars'])
-		self.min_upper_chars = int(config['min_upper_chars'])
-		self.min_digits = int(config['min_digits'])
-		self.min_special_chars = int(config['min_special_chars'])
-		self.can_overlap_with_mail = bool(config['can_overlap_with_mail'] == 'True')
+		c = config['Credentials.Submitted']
+		self.min_length = int(c['min_length'])
+		self.max_length = int(c['max_length'])
+		self.min_lower_chars = int(c['min_lower_chars'])
+		self.min_upper_chars = int(c['min_upper_chars'])
+		self.min_digits = int(c['min_digits'])
+		self.min_special_chars = int(c['min_special_chars'])
+		self.can_overlap_with_mail = bool(c['can_overlap_with_mail'] == 'True')
 
 	def __call__(self, form, field):
 		# Define the error message to show to the user in case of a failed test
-		self.messages = [f"Password length: {self.min_length}-{self.max_length}",
-						 f"Lowercase characters: >{self.min_lower_chars}",
-						 f"Uppercase characters: >{self.min_upper_chars}",
-						 f"Digits: >{self.min_digits}",
-						 f"Special characters: >{self.min_special_chars}, "
-						 f"can be used: {SAFE_SPECIAL_CHARS}"]
+		self.messages = [
+			f"Password length: {self.min_length}-{self.max_length}",
+			f"Lowercase characters: >{self.min_lower_chars}",
+			f"Uppercase characters: >{self.min_upper_chars}",
+			f"Digits: >{self.min_digits}",
+			f"Special characters: >{self.min_special_chars}, "
+			f"can be used: {SAFE_SPECIAL_CHARS}",
+			f"The password cannot contain parts of the email-address..."]
 
 		# Get the data from the form
 		password: str = field.data
@@ -127,8 +130,7 @@ class SecurePassword:
 				# of the email before the '@' symbol
 				any([s in password for s in email.split('@')[0].split('.')])):
 			# Show a different error for this test
-			raise ValidationError('The password cannot contain parts of '
-								  'the email-address...')
+			raise ValidationError(self.messages[5])
 
 
 class LoginForm(FlaskForm):
@@ -174,11 +176,11 @@ class SignupStandardForm(FlaskForm):
 	reenter_email = StringField(
 		'Reenter your email-address...',
 		validators=[InputRequired(
-					'Please reenter your email-address...'),
-					EqualTo(
-						'email',
-						message='Email-addresses must match...')
-			]
+			'Please reenter your email-address...'),
+			EqualTo(
+				'email',
+				message='Email-addresses must match...')
+		]
 	)
 
 	password = PasswordField(  # TODO: must be a secure password
@@ -186,17 +188,17 @@ class SignupStandardForm(FlaskForm):
 		validators=[InputRequired(
 			'Please enter a password...'),
 			SecurePassword(),
-			Regexp('[a-zA-Z0-9_'+SAFE_SPECIAL_CHARS+']',
-				message=f'Please only use letters, numbers and {SAFE_SPECIAL_CHARS}')
+			Regexp('[a-zA-Z0-9_' + SAFE_SPECIAL_CHARS + ']',
+				   message=f'Please only use letters, numbers and {SAFE_SPECIAL_CHARS}')
 		]
 	)
 	reenter_password = PasswordField(
 		'Reenter your password...',
 		validators=[InputRequired(
 			'Please reenter a password...'),
-				EqualTo(
-					'password',
-					message='Passwords must match...')
+			EqualTo(
+				'password',
+				message='Passwords must match...')
 		]
 	)
 
@@ -221,11 +223,14 @@ class SignupForm(FlaskForm):
 	)
 
 
+lobby_code_length = str(int(config['Lobby.Security']['code_length']) // 2)
+
+
 class LobbyJoinForm(FlaskForm):
 	code = StringField(
 		validators=[
 			InputRequired('Please enter a code...'),
-			Regexp('[0-9A-F]{8}',
+			Regexp(f"[0-9A-F]{'{' + lobby_code_length + '}'}",
 				   message="Please enter a valid code...")]
 	)
 
