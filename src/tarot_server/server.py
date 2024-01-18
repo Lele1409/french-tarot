@@ -19,7 +19,10 @@ from src.tarot_server.views.errors import views_errors
 # Instantiate the application and configure
 app_tarot_server = Flask('tarot_server',
 						 template_folder=os.path.abspath(
-							 r'./tarot_server/templates')
+							 r'./tarot_server/templates'),
+						 instance_path=os.path.abspath(
+							 r'./tarot_server/instance'
+						 )
 						 )
 
 # Set the secret keys
@@ -51,7 +54,7 @@ def run_tarot_server() -> None:
 	# First, we need to import the model classes because otherwise
 	# the tables are not created in the database
 	from src.tarot_server.db.models import User, Role, UserRoles  # NOQA
-	if not os.path.exists('instance/' + db_name):
+	if not os.path.exists(os.path.abspath(r'./tarot_server/instance' + db_name)):
 
 		# Create the file with the given context
 		with app_tarot_server.app_context():
