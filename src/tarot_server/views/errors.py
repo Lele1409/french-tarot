@@ -4,12 +4,12 @@ views_errors = Blueprint('errors', 'tarot_server')
 
 
 @views_errors.app_errorhandler(403)
-def error_403_forbidden():
+def error_403_forbidden(e):
 	return render_template('errors/403.html'), 403
 
 
 @views_errors.app_errorhandler(404)
-def error_404_page_not_found():
+def error_404_page_not_found(e):
 	return render_template('errors/404.html'), 404
 
 
