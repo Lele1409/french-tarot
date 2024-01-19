@@ -18,9 +18,12 @@ from src.config.configLoader import config_tarot_server
 app_tarot_server = Flask('tarot_server',
 						 template_folder=os.path.abspath(
 							 r'./tarot_server/templates'),
+						 static_folder=os.path.abspath(
+							 r'./tarot_server/static'
+						 ),
 						 instance_path=os.path.abspath(
-							 r'./tarot_server/instance'
-						 ))
+							 r'./tarot_server/instance')
+						 )
 
 # Set the secret keys
 app_tarot_server.config['SECRET_KEY'] = \
@@ -29,7 +32,8 @@ app_tarot_server.config['WTF_CSRF_SECRET_KEY'] = \
 	os.environ.get('APP_TAROT_SERVER_CSRF_SECRET_KEY')
 
 # Instantiate the websockets
-socketio = SocketIO(app_tarot_server)
+socketio = SocketIO(app_tarot_server,
+					logger=True)
 
 # Instantiate the database
 tarot_server_db = SQLAlchemy()
