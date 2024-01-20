@@ -17,7 +17,8 @@ from src.config.configLoader import config_tarot_server
 # Instantiate the application and configure
 app_tarot_server = Flask('tarot_server',
 						 template_folder=os.path.abspath(
-							 r'./tarot_server/templates'),
+							 r'./tarot_server/templates'
+						 ),
 						 static_folder=os.path.abspath(
 							 r'./tarot_server/static'
 						 ),

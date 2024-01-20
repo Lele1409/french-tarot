@@ -13,18 +13,21 @@ views_lobby = Blueprint('lobby', 'tarot_server', url_prefix='/lobby')
 class TarotRooms(dict):
 	def __init__(self):
 		super().__init__()
+		self.setdefault(None)
 
 	def room_exists(self, code):
-		try:
-			self.get(code)
+		if self.get(code) is not None:
 			return True
-		except KeyError:
+		else:
 			return False
 
 	def create(self, code):
+		print(f"Created lobby {code}")
 		self.update({code: Game()})
 
 	def join(self, user, code):
+		print(self)
+		print(f"Player {user} joined lobby {code}")
 		self.get(code).add_player(user)
 
 
@@ -67,6 +70,8 @@ def on_connect():
 		lobby_code: str = referrer.split('/')[4]
 	except KeyError:
 		return
+
+
 
 	if endpoint == 'lobby' and tarot_rooms.room_exists(lobby_code):
 		tarot_rooms.join(
