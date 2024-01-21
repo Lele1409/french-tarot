@@ -1,8 +1,10 @@
 import secrets
+import time
 
+import flask_socketio
 from flask import Blueprint, redirect, render_template, request, url_for
 from flask_login import current_user
-from flask_socketio import disconnect
+from flask_socketio import Namespace, disconnect, join_room, leave_room  # NOQA
 from flask_user import login_required
 
 from src.config.configLoader import config_tarot_server as config
@@ -31,10 +33,11 @@ class TarotRooms(dict):
 		else:
 			return False
 
-	def is_joignable(self, user, code) -> bool:
+	def is_joignable(self, user: str, code: str) -> bool:
 		# First check if the lobby's status has been changed
 		# to non-joignable
-		if not self[code].is_accepting_more_players():
+		room = self[code]
+		if not room.is_accepting_more_players():
 			# Get the room the user was last in
 			past_room_code: str = self.get_room_code(user)
 			# If the client is trying to reconnect to a lobby,
@@ -54,11 +57,9 @@ class TarotRooms(dict):
 		return True
 
 	def create(self, code: str) -> None:
-		print(f"Created lobby {code}")
 		self.update({code: TarotGameProxy()})
 
 	def join(self, user: str, code: str) -> None:
-		print(f"Player {user} joined lobby {code}")
 		self._players.update({user: code})
 		self.get(code).add_player(user)
 
@@ -93,49 +94,84 @@ def join(lobby_code=None):
 		return redirect(url_for('menu.menu'))
 	if not tarot_rooms.is_joignable(current_user.id, lobby_code):
 		# TODO: display some sort of information to the user
-		#  about why the wasn't able to join
+		#  about why the wasn't able to join, and/or redirect
+		#  him to an observer page
 		return redirect(url_for('menu.menu'))
 	return render_template('lobby.html', code=lobby_code)
 
 
 # TODO: Handle socket.io errors
 
+class LobbyNamespace(Namespace):
+	def trigger_event(self, event, sid, *args):
+		if args:
+			super().trigger_event(event, sid, *args)
+		else:
+			super().trigger_event(event, sid)
+	# TODO: check for long disconnects
 
-@socketio.on('connect', namespace='/lobby')
-def on_connect():
-	print(current_user.id, ' connected')
-	# Get the referrer header the client tried to connect with
-	referrer: str = request.referrer
+	def on_connect(self):  # NOQA
+		# Get the referrer header the client tried to connect with
+		referrer: str = request.referrer
 
-	# Try to get the endpoint of the request, and if it exists,
-	# get the lobby_code to find out to which lobby the user
-	# tries to connect to.
-	try:
-		endpoint: str = referrer.split('/')[3]
-		lobby_code: str = referrer.split('/')[4]
-	except KeyError:
-		disconnect()
-		return
+		# Try to get the endpoint of the request, and if it exists,
+		# get the lobby_code to find out to which lobby the user
+		# tries to connect to.
+		try:
+			endpoint: str = referrer.split('/')[3]
+			lobby_code: str = referrer.split('/')[4]
+		except KeyError:
+			disconnect()
+			return
 
-	if endpoint == 'lobby' and tarot_rooms.room_exists(lobby_code):
-		# Else freshly join the room
+		# If the request is not coming from the '/lobby' page
+		# or the client tries to connect to a room that does not exist anymore
+		if not (endpoint == 'lobby' and tarot_rooms.room_exists(lobby_code)):
+			disconnect()
+
+		player = current_user.id
+
+		# Remove the player from the last socket room he was in
+		# (only if he was previously connected to one)
+		last_room = tarot_rooms.get_room_code(player)
+		if last_room is not None:
+			leave_room(last_room)
+
+		# Join the tarot room
 		tarot_rooms.join(
-			user=current_user.id,
+			user=player,
 			code=lobby_code
 		)
-	else:
-		disconnect()
+
+		# Finally, join the player to the new socket room
+		join_room(lobby_code)
+
+	def on_disconnect(self):  # NOQA
+		room = tarot_rooms[tarot_rooms.get_room_code(current_user.id)]
+		# If the player was in a room during disconnect
+		if room is not None:
+			player: TarotPlayerProxy = room.get_player(current_user.id)
+			player.set_disconnected()
+
+	def on_manual_debug(self, data):  # NOQA
+		print("REF:", request.referrer, "DATA:", data)
+		print(flask_socketio.rooms())
 
 
-@socketio.on('disconnect', namespace='/lobby')
-def on_disconnect():
-	print(current_user.id, ' disconnected')
-	room = tarot_rooms[tarot_rooms.get_room_code(current_user.id)]
-	# If the player was in a room during disconnect
-	if room is not None:
-		room.get_player(current_user.id).set_disconnected()
+def run_background_update():
+	last_execution = time.time()
+	while True:
+		time_since_last = time.time() - last_execution
+		if time_since_last > 2:
+			last_execution = time.time()
+			lobby_background_update()
+		else:
+			socketio.sleep(2 - time_since_last)
 
 
-@socketio.on('MANUAL_DEBUG', namespace='/lobby')
-def on_manual_debug(data):
-	print("REF:", request.referrer, "DATA:", data)
+def lobby_background_update():
+	...
+
+
+socketio.start_background_task(target=run_background_update)
+socketio.on_namespace(LobbyNamespace('/lobby'))
