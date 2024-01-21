@@ -33,9 +33,13 @@ class TarotGameProxy:
 
 		self._game = None  # TODO: link to actual game object (created on start)
 		self.game_running = False
+		self.game_finished = False
 
 	def add_player(self, player: str) -> None:
 		self._players.update({player: TarotPlayerProxy()})
+
+	def get_players(self) -> dict:
+		return self._players
 
 	def get_player(self, player: str) -> TarotPlayerProxy:
 		return self._players.get(player)

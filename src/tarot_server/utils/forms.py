@@ -13,6 +13,8 @@ from src.config.configLoader import config_tarot_server as config
 from src.tarot_server.db.models import User
 from src.tarot_server.utils.string_manip import count_any_occurrence as c_a_o
 
+# TODO: break down file in multiple files in one /form directory
+
 SAFE_SPECIAL_CHARS = config['Credentials'][
 	'safe_special_chars']
 
