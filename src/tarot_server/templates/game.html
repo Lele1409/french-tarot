@@ -1,26 +1,20 @@
 {% extends "tarot_server_base.html" %}
 
 {% block title %}
-    Lobby
+    Game
 {% endblock %}
 
 {% block head %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/game-styles.css') }}">
     <script type="text/javascript" charset="utf-8" src="{{ url_for('static', filename='js/sockets/shared-sockets.js') }}" defer></script>
-    <script type="text/javascript" charset="utf-8" src="{{ url_for('static', filename='js/sockets/lobby-sockets.js') }}" defer></script>
+    <script type="text/javascript" charset="utf-8" src="{{ url_for('static', filename='js/sockets/game-sockets.js') }}" defer></script>
 {% endblock %}
 
 
 {% block body %}
-    <h1>Lobby</h1>
+    <h1>Game</h1>
     <h4>Room code: {{ code }}</h4>
-
-
-    <button disabled>Copy Code</button>
-
-    <button id="start-button">Start Game</button>
-
-    <br>
     <button id="quit-button">Force quit lobby</button>
 
     <ul id="player-list"></ul>

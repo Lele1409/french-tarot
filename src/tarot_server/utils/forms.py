@@ -15,8 +15,7 @@ from src.tarot_server.utils.string_manip import count_any_occurrence as c_a_o
 
 # TODO: break down file in multiple files in one /form directory
 
-SAFE_SPECIAL_CHARS = config['Credentials'][
-	'safe_special_chars']
+SAFE_SPECIAL_CHARS = config['Credentials']['safe_special_chars']
 
 
 class NotEqualTo(object):
@@ -237,7 +236,7 @@ class LobbyJoinForm(FlaskForm):
 	)
 
 	submit_join = SubmitField(
-		'Join lobby with code',
+		'(Re-)Join lobby with code',
 		validators=[InputRequired('Please submit...')]
 	)
 

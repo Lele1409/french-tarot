@@ -14,7 +14,7 @@ class TarotPlayerProxy(dict):
 						# about the user's current disconnect
 						"disconnect_reported": False,
 						# Indicates that the user is an AI
-						"is_replaced": False,
+						"is_replaced": False,  # TODO: Change to is AI
 						# Indicates that the other players have been informed
 						# about this player getting replaced
 						"replace_reported": False
@@ -41,12 +41,18 @@ class TarotGameProxy:
 
 		self._invite_only = False
 
-		self._game = None  # TODO: link to actual game object (created on start)
+		# TODO: link to actual game object (created on start)
+		#  means that all methods here need to run also on the
+		#  non-proxy object
+		self._game = None
 		self.game_running = False
 		self.game_finished = False
 
 	def add_player(self, player: str) -> None:
 		self._players.update({player: TarotPlayerProxy()})
+
+	def remove_player(self, player: str) -> None:
+		self._players.pop(player)
 
 	def get_players(self) -> dict[str, TarotPlayerProxy]:
 		return self._players
@@ -54,22 +60,14 @@ class TarotGameProxy:
 	def get_player(self, player: str) -> TarotPlayerProxy:
 		return self._players.get(player)
 
-	def get_player_id(self, player: TarotPlayerProxy) -> str:
+	def get_player_id_by_player(self, player: TarotPlayerProxy) -> str:
 		return [k for k, v in self._players.items() if v == player][0]
 
 	def is_accepting_more_players(self) -> bool:
 		if self._invite_only:
-			# TODO: add possibility of invite-only mode
+			# TODO: add possibility for invite-only mode
 			return False
 		# If no more players are accepted into the lobby
 		if len(self._players) >= 5 or self.game_running:
 			return False
 		return True
-
-# TODO: disconnected players:
-# 	- connected players should be informed about the other player's
-# 	  disconnect after [10]s
-# 	- the disconnected player should have [90]s to reconnect
-#	  before getting replaced by an automated player
-#		HOW DO WE CHECK THIS?
-#

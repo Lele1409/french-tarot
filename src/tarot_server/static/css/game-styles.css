@@ -1,0 +1,7 @@
+#player-list .player-is-replaced {
+    color: blue
+}
+
+#player-list .player-not-connected{
+    color: dimgray;
+}

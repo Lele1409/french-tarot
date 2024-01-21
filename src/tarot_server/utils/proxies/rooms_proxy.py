@@ -53,6 +53,9 @@ class TarotRooms(dict):
 	def remove(self, code: str) -> None:
 		self.pop(code)
 
+	def get_room_by_player(self, player: str) -> TarotGameProxy:
+		return self[self.get_room_code_by_player(player)]
+
 	def get_room_code_by_player(self, player: str) -> str:
 		return self._players.get(player)
 
