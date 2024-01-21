@@ -15,10 +15,10 @@ class TarotRooms(dict):
 	def room_exists(self, code: str) -> bool:
 		"""Checks if there is a room object associated with
 		 the supplied code"""
-		if self.get(code) is not None:
-			return True
-		else:
+		if self.get(code) is None:
 			return False
+		else:
+			return True
 
 	def is_joignable(self, user: str, code: str) -> bool:
 		# First check if the lobby's status has been changed
@@ -57,5 +57,4 @@ class TarotRooms(dict):
 		return self._players.get(player)
 
 	def get_room_code_by_room(self, room: TarotGameProxy) -> str:
-		print("items", self.items())
-		return next(key for key, value in self.items() if value == room)
+		return [k for k, v in self.items() if v == room][0]

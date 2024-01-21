@@ -38,30 +38,71 @@ def join(lobby_code=None):
 		return redirect(url_for('menu.menu'))
 	if not tarot_rooms.is_joignable(current_user.id, lobby_code):
 		# TODO: display some sort of information to the user
-		#  about why the wasn't able to join, and/or redirect
+		#  about why he wasn't able to join, and/or redirect
 		#  him to an observer page
 		return redirect(url_for('menu.menu'))
 	return render_template('lobby.html', code=lobby_code)
 
 
-def lobby_background_update():
+def lobby_background_update() -> None:
 	room: TarotGameProxy
-	for room in tarot_rooms:
+	for room in list(tarot_rooms.values()).copy():
 		if room is None:
 			continue
+		else:
+			check_players_status(room)
+			check_empty_room(room)
 
-		player: TarotPlayerProxy
-		for player in room.get_players():
-			# Inform other players about a players disconnect
-			socketio.emit("info_player_disconnect",
-						  player,
-						  to=tarot_rooms.get_room_code_by_room(room))
 
-			# Replace player disconnected for too long
+def check_players_status(room: TarotGameProxy) -> None:
+	player: TarotPlayerProxy
+	# The for loop is executed on a copy of the list because otherwise
+	# the dictionary might change during execution (deletion of parts of it)
+	for player in list(room.get_players().values()).copy():
+		if player['is_connected']:
+			continue
 
-		# Close lobbies where all players are replaced
-		# or if the game has finished
-		players = room.get_players()
+		player_id = room.get_player_id(player)
+
+		# Inform players about another player's disconnect
+		if player.get_time_since_last_seen() > 10:  # TODO: configurability
+			if not player['disconnect_reported']:
+				player['disconnect_reported'] = True
+				socketio.emit("info_player_disconnected",
+							  player_id,
+							  namespace='/lobby',
+							  to=tarot_rooms.get_room_code_by_room(room))
+
+		# Replace player disconnected for too long if the game is already running
+		if player.get_time_since_last_seen() > 30:  # TODO: configurability
+			if room.game_running:
+				if not player['is_replaced']:
+					# TODO: actually replace the player by an a(utonomous)i(ntern)
+					player['is_replaced'] = True
+
+				if not player['replace_reported']:
+					player['replace_reported'] = True
+					socketio.emit("info_player_replaced",
+								  player_id,
+								  namespace='/lobby',
+								  to=tarot_rooms.get_room_code_by_room(room))
+			# If the game hasn't yet started, remove the player from the slot
+			else:
+				room.get_players().pop(player_id)
+				socketio.emit("info_player_removed",
+							  player_id,
+							  namespace='/lobby',
+							  to=tarot_rooms.get_room_code_by_room(room))
+
+
+def check_empty_room(room: TarotGameProxy):
+	all_players_left = all(
+		[player['is_replaced'] for player in room.get_players().values()]
+	)
+	if room.game_finished or all_players_left:
+		room_code = tarot_rooms.get_room_code_by_room(room)
+		socketio.close_room(room_code)
+		del tarot_rooms[room_code]
 
 
 socketio.start_background_task(target=run_background_update,

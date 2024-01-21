@@ -3,14 +3,17 @@ from flask import request
 from flask_login import current_user
 from flask_socketio import Namespace, disconnect, join_room, leave_room  # NOQA
 
-from src.tarot_server.utils.proxies.tarot_game_proxies import TarotPlayerProxy
+from src.tarot_server.server import socketio
+from src.tarot_server.utils.proxies.room_proxy import TarotRooms
+from src.tarot_server.utils.proxies.tarot_game_proxies import TarotGameProxy, \
+	TarotPlayerProxy
 
 
 # TODO: Handle socket.io errors
 
 class LobbyNamespace(Namespace):
 	def set_tarot_rooms(self, tarot_rooms):
-		self.tarot_rooms = tarot_rooms
+		self.tarot_rooms: TarotRooms[TarotGameProxy] = tarot_rooms
 
 	def trigger_event(self, event, sid, *args):
 		if args:
@@ -35,8 +38,9 @@ class LobbyNamespace(Namespace):
 
 		# If the request is not coming from the '/lobby' page
 		# or the client tries to connect to a room that does not exist anymore
-		if not (endpoint == 'lobby' and self.tarot_rooms.room_exists(lobby_code)):
+		if not endpoint == 'lobby' or not self.tarot_rooms.room_exists(lobby_code):
 			disconnect()
+			return
 
 		player = current_user.id
 
@@ -55,6 +59,12 @@ class LobbyNamespace(Namespace):
 		# Finally, join the player to the new socket room
 		join_room(lobby_code)
 
+		# Inform the other player's about the player connecting
+		socketio.emit('info_room_players',
+					  self.tarot_rooms[lobby_code].get_players(),
+					  namespace='/lobby',
+					  to=lobby_code)
+
 	def on_disconnect(self):  # NOQA
 		room = self.tarot_rooms[
 			self.tarot_rooms.get_room_code_by_player(current_user.id)]
@@ -63,6 +73,7 @@ class LobbyNamespace(Namespace):
 			player: TarotPlayerProxy = room.get_player(current_user.id)
 			player.set_disconnected()
 
-	def on_manual_debug(self, data):  # NOQA
+	def on_manual_debug(self, data):
 		print("REF:", request.referrer, "DATA:", data)
-		print(flask_socketio.rooms())
+		print("Rooms:", flask_socketio.rooms())
+		print("Players:", [player for player in [room.get_players().values() for room in self.tarot_rooms.values() if room is not None]])
