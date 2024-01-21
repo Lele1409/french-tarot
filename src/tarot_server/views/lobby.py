@@ -7,17 +7,23 @@ from flask_user import login_required
 
 from src.config.configLoader import config_tarot_server as config
 from src.tarot_server.server import socketio
-from src.tarot_server.utils.tarot_game_proxy import TarotGameProxy
+from src.tarot_server.utils.tarot_game_proxies import TarotGameProxy, \
+	TarotPlayerProxy
 
 views_lobby = Blueprint('lobby', 'tarot_server', url_prefix='/lobby')
 
 
 class TarotRooms(dict):
-	def __init__(self):
+	def __init__(self) -> None:
 		super().__init__()
 		self.setdefault(None)
 
-	def room_exists(self, code):
+		# Add a dictionary to easily find to which
+		# game a player has been connected to last
+		self._players: dict = {}
+		self._players.setdefault(None)
+
+	def room_exists(self, code: str) -> bool:
 		"""Checks if there is a room object associated with
 		 the supplied code"""
 		if self.get(code) is not None:
@@ -25,23 +31,45 @@ class TarotRooms(dict):
 		else:
 			return False
 
-	def create(self, code):
-		print(f"Created lobby {code}")
-		self.update(
-			{code: TarotGameProxy()})
+	def is_joignable(self, user, code) -> bool:
+		# First check if the lobby's status has been changed
+		# to non-joignable
+		if not self[code].is_accepting_more_players():
+			# Get the room the user was last in
+			past_room_code: str = self.get_room_code(user)
+			# If the client is trying to reconnect to a lobby,
+			# he has disconnected from
+			if past_room_code == code:
+				past_room: TarotGameProxy = self[past_room_code]
+				player: TarotPlayerProxy = past_room.get_player(user)
+				# If the client is trying to reconnect to a game,
+				# he hasn't yet been replaced in
+				if not player['is_replaced']:
+					# User disconnected not to long ago
+					return True
+			# User has either joined to late,
+			# or got replaced while reconnecting
+			return False
+		# Anyone can join
+		return True
 
-	def join(self, user, code):
+	def create(self, code: str) -> None:
+		print(f"Created lobby {code}")
+		self.update({code: TarotGameProxy()})
+
+	def join(self, user: str, code: str) -> None:
 		print(f"Player {user} joined lobby {code}")
+		self._players.update({user: code})
 		self.get(code).add_player(user)
 
-	def remove(self, code):
+	def remove(self, code: str) -> None:
 		self.pop(code)
 
+	def get_room_code(self, player: str) -> str:
+		return self._players.get(player)
 
-# TODO: if all users left a lobby, close the lobby
 
-
-tarot_rooms = TarotRooms()
+tarot_rooms: TarotRooms[TarotGameProxy] = TarotRooms()
 
 
 @views_lobby.route('/')
@@ -62,6 +90,10 @@ def join(lobby_code=None):
 		# TODO: display some sort of information to the user
 		#  that the lobby does not exist before sending them
 		#  back to the menu
+		return redirect(url_for('menu.menu'))
+	if not tarot_rooms.is_joignable(current_user.id, lobby_code):
+		# TODO: display some sort of information to the user
+		#  about why the wasn't able to join
 		return redirect(url_for('menu.menu'))
 	return render_template('lobby.html', code=lobby_code)
 
@@ -86,6 +118,7 @@ def on_connect():
 		return
 
 	if endpoint == 'lobby' and tarot_rooms.room_exists(lobby_code):
+		# Else freshly join the room
 		tarot_rooms.join(
 			user=current_user.id,
 			code=lobby_code
@@ -97,8 +130,12 @@ def on_connect():
 @socketio.on('disconnect', namespace='/lobby')
 def on_disconnect():
 	print(current_user.id, ' disconnected')
+	room = tarot_rooms[tarot_rooms.get_room_code(current_user.id)]
+	# If the player was in a room during disconnect
+	if room is not None:
+		room.get_player(current_user.id).set_disconnected()
 
 
 @socketio.on('MANUAL_DEBUG', namespace='/lobby')
 def on_manual_debug(data):
-	print("REF:", request.url, request.root_url, request.host_url, request.base_url, "DATA:", data)
+	print("REF:", request.referrer, "DATA:", data)
