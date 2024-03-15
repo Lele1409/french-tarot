@@ -25,15 +25,16 @@ class LobbyNamespace(Namespace):
         # get the room_code to find out to which lobby the user
         # tries to connect to.
         try:
-            endpoint: str = referrer.split('/')[3]
-            room_code: str = referrer.split('/')[4]
+            # protocol://d.oma.in/end/point/room_code -> end/point
+            endpoint: str = '/'.join(referrer.split('/')[3:-1])
+            # protocol://d.oma.in/end/point/room_code -> room_code
+            room_code: str = referrer.split('/')[-1]
         except KeyError:
             return error
 
         # If the request is not coming from the '/lobby' page
         # or the client tries to connect to a room that does not exist anymore
-        if not endpoint == 'lobby' or not self.tarot_rooms.room_exists(
-                room_code):
+        if endpoint != 'lobby' or not self.tarot_rooms.room_exists(room_code):
             return error
 
         player = current_user.id
