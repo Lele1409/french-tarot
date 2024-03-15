@@ -4,7 +4,7 @@ from flask import Blueprint, redirect, render_template, url_for
 from flask_login import current_user
 from flask_user import login_required
 
-from src.config.configLoader import config_tarot_server as config
+from src.config.config_loader import config_tarot_server as config
 from src.tarot_server.server import socketio
 from src.tarot_server.utils.background_runner import run_background_update
 from src.tarot_server.utils.proxies.rooms_proxy import TarotRooms

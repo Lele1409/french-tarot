@@ -8,8 +8,8 @@ from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
 from flask_user import UserManager
 
-from src.config.appConfig import AppConfigFlaskUser
-from src.config.configLoader import config_tarot_server
+from src.config.app_config import AppConfigFlaskUser
+from src.config.config_loader import config_tarot_server
 
 # TODO: refactor file to have configuration all in one folder, and different
 #  functions for different steps of the app creation in their own

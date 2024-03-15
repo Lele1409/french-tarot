@@ -1,7 +1,7 @@
 import random
 import string
 
-from src.config.configLoader import config_tarot_server
+from src.config.config_loader import config_tarot_server
 from src.tarot_server.db.models import User
 from src.tarot_server.server import tarot_server_db
 
