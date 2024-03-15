@@ -12,8 +12,8 @@ def id_is_used(uid) -> bool:
 	:returns: A boolean, True if the id can be used, False otherwise"""
 
 	is_used: bool = (tarot_server_db.session.query(User)
-					         .filter_by(id=uid)
-					         .first() == uid)
+					 .filter_by(id=uid)
+					 .first() == uid)
 
 	return is_used
 

@@ -7,4 +7,4 @@ views_settings = Blueprint('settings', 'tarot_server')
 @views_settings.route('/settings')
 @login_required
 def settings():
-	return render_template('settings.html')
+    return render_template('settings.html')
