@@ -1,7 +1,7 @@
-#player-list .player-is-replaced {
+#player-list .player-is-ai {
     color: blue
 }
 
-#player-list .player-not-connected{
+#player-list .player-not-connected {
     color: dimgray;
 }

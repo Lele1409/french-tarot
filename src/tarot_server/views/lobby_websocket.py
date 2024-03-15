@@ -4,14 +4,19 @@ from flask_login import current_user
 from flask_socketio import Namespace, disconnect, join_room, leave_room  # NOQA
 
 from src.tarot_server.server import socketio
+from src.tarot_server.utils.proxies.rooms_proxy import TarotRooms
 from src.tarot_server.utils.proxies.tarot_game_proxies import TarotGameProxy, \
-	TarotPlayerProxy
-from src.tarot_server.views.lobby import tarot_rooms
-
+    TarotPlayerProxy
 
 # TODO: Handle socket.io errors
 
+error = ConnectionRefusedError('Something went wrong while trying to connect.')
+
+
 class LobbyNamespace(Namespace):
+	def set_tarot_rooms(self, tarot_rooms):
+		self.tarot_rooms: TarotRooms[TarotGameProxy] = tarot_rooms  # NOQA
+
 	def on_connect(self):  # NOQA
 		# Get the referrer header the client tried to connect with
 		referrer: str = request.referrer
@@ -23,20 +28,18 @@ class LobbyNamespace(Namespace):
 			endpoint: str = referrer.split('/')[3]
 			room_code: str = referrer.split('/')[4]
 		except KeyError:
-			disconnect()
-			return
+			return error
 
 		# If the request is not coming from the '/lobby' page
 		# or the client tries to connect to a room that does not exist anymore
-		if not endpoint == 'lobby' or not tarot_rooms.room_exists(room_code):
-			disconnect()
-			return
+		if not endpoint == 'lobby' or not self.tarot_rooms.room_exists(room_code):
+			return error
 
 		player = current_user.id
 
 		# Remove the player from the last socket room he was in
 		# (only if he was previously connected to one)
-		last_room = tarot_rooms.get_room_code_by_player(player)
+		last_room = self.tarot_rooms.get_room_code_by_player(player)
 		if last_room is not None:
 			leave_room(last_room)
 
@@ -54,7 +57,7 @@ class LobbyNamespace(Namespace):
 
 	def on_disconnect(self):
 		room: TarotGameProxy = \
-			tarot_rooms.get_room_by_player(current_user.id)
+			self.tarot_rooms.get_room_by_player(current_user.id)
 		# If the player was in a room during disconnect
 		if room is not None:
 			player: TarotPlayerProxy = room.get_player(current_user.id)
@@ -62,15 +65,16 @@ class LobbyNamespace(Namespace):
 
 	def on_action_player_force_quit(self):
 		player = current_user.id
-		room_code = tarot_rooms.get_room_code_by_player(player)
-		room = tarot_rooms.get_room_by_player(player)
+		room_code = self.tarot_rooms.get_room_code_by_player(player)
+		room = self.tarot_rooms.get_room_by_player(player)
 
-		room.remove_player(player)
+		if room.game_running:
+			room.get_player(player)
+		else:
+			room.remove_player(player)
 		update_client_player_list(room_code)
 
 	def on_action_game_start(self):
-		print('Game started')
-
 		room_code = self.tarot_rooms.get_room_code_by_player(current_user.id)
 
 		# if conditions for game start are met
@@ -89,7 +93,13 @@ class LobbyNamespace(Namespace):
 		print("Players:", [player for player in [room.get_players().values() for room in self.tarot_rooms.values() if room is not None]])
 
 
+@socketio.on_error('/lobby')
+def error_handler_chat(e):
+	print(e)
+
+
 def update_client_player_list(room_code):
+	from src.tarot_server.views.lobby import tarot_rooms
 	socketio.emit('info_room_players',
 				  tarot_rooms[room_code].get_players(),
 				  namespace='/lobby',

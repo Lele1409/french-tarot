@@ -34,7 +34,7 @@ class TarotRooms(dict):
 				player: TarotPlayerProxy = past_room.get_player(user)
 				# If the client is trying to reconnect to a game,
 				# he hasn't yet been replaced in
-				if not player['is_replaced']:
+				if not player['is_ai']:
 					# User disconnected not to long ago
 					return True
 			# User has either joined to late,

@@ -21,10 +21,11 @@ def sign_up(email: str | None,
 
 	# Get a unique id for the account
 	uid = gen_id()
+	# And a unique password
+	upw = gen_pw()
 
 	# If the account is supposed to be an anonymous account
 	if anon:
-		upw = gen_pw()
 		user_new = User(id=uid, email=uid, password=upw)
 		# Set the user's role
 		user_new.roles.append(get_role_by_name('anonymous'))

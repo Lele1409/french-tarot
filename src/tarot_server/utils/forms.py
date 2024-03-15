@@ -5,9 +5,9 @@ import wtforms
 from flask_wtf import FlaskForm
 from werkzeug.security import check_password_hash
 from wtforms.fields.simple import BooleanField, PasswordField, StringField, \
-	SubmitField
+    SubmitField
 from wtforms.validators import Email, EqualTo, InputRequired, Optional, \
-	Regexp, ValidationError
+    Regexp, ValidationError
 
 from src.config.configLoader import config_tarot_server as config
 from src.tarot_server.db.models import User
@@ -37,7 +37,7 @@ class NotEqualTo(object):
 		except KeyError:
 			raise ValidationError(
 				field.gettext(f"Invalid fieldname {self.fieldname}"))
-		if field.data == other:
+		if field.data == other.data:
 			d = {
 				'other_label': hasattr(other,
 									   'label') and other.label.text or self.fieldname,
@@ -46,7 +46,7 @@ class NotEqualTo(object):
 			message = self.message
 			if not message:
 				message = field.gettext(
-					f'Field must be equal to {d['other_name']}')
+					f'Field must not be equal to {d['other_name']}')
 			raise ValidationError(message)
 
 

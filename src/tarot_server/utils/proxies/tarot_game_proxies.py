@@ -14,15 +14,23 @@ class TarotPlayerProxy(dict):
 						# about the user's current disconnect
 						"disconnect_reported": False,
 						# Indicates that the user is an AI
-						"is_replaced": False,  # TODO: Change to is AI
+						"is_ai": False,
 						# Indicates that the other players have been informed
 						# about this player getting replaced
 						"replace_reported": False
 					})
 
+		# TODO: link to actual game object (created on start)
+		#  means that all methods here need to run also on the
+		#  non-proxy object
+		self.player = None
+
 	def set_disconnected(self) -> None:
 		self["is_connected"] = False
 		self["disconnected_at"] = time.time()
+
+	def replace_by_ai(self):
+		self['is_ai'] = True
 
 	def get_time_since_last_seen(self) -> float:
 		return time.time() - self["disconnected_at"]
@@ -46,7 +54,7 @@ class TarotGameProxy:
 		#  non-proxy object
 		self._game = None
 		self.game_running = False
-		self.game_finished = False
+		self.game_can_be_deleted = False
 
 	def add_player(self, player: str) -> None:
 		self._players.update({player: TarotPlayerProxy()})

@@ -1,10 +1,9 @@
-const startButton = document.getElementById('start-button')
+const startButton = document.getElementById('start-button');
 
 
 startButton.addEventListener('click', () => {
-    websocket.emit('action_game_start', () => {
-        // Inform the server that a player want's to start
-    });
+    // Inform the server that a player want's to start
+    websocket.emit('action_game_start');
 })
 
 

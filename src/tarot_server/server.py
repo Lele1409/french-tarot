@@ -15,16 +15,17 @@ from src.config.configLoader import config_tarot_server
 #  functions for different steps of the app creation in their own
 
 # Instantiate the application and configure
-app_tarot_server = Flask('tarot_server',
-						 template_folder=os.path.abspath(
-							 r'./tarot_server/templates'
-						 ),
-						 static_folder=os.path.abspath(
-							 r'./tarot_server/static'
-						 ),
-						 instance_path=os.path.abspath(
-							 r'./tarot_server/instance')
-						 )
+app_tarot_server = Flask(
+	'tarot_server',
+	template_folder=os.path.abspath(
+		 r'./tarot_server/templates'
+	),
+	static_folder=os.path.abspath(
+		 r'./tarot_server/static'
+	),
+	instance_path=os.path.abspath(
+		 r'./tarot_server/instance')
+)
 
 # Set the secret keys
 app_tarot_server.config['SECRET_KEY'] = \

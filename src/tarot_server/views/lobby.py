@@ -9,9 +9,9 @@ from src.tarot_server.server import socketio
 from src.tarot_server.utils.background_runner import run_background_update
 from src.tarot_server.utils.proxies.rooms_proxy import TarotRooms
 from src.tarot_server.utils.proxies.tarot_game_proxies import TarotGameProxy, \
-	TarotPlayerProxy
+    TarotPlayerProxy
 from src.tarot_server.views.lobby_websocket import LobbyNamespace, \
-	update_client_player_list
+    update_client_player_list
 
 views_lobby = Blueprint('lobby', 'tarot_server', url_prefix='/lobby')
 
@@ -91,9 +91,9 @@ def check_players_status(room: TarotGameProxy) -> None:
 
 		# Replace player disconnected for too long if the game is already running
 		if player.get_time_since_last_seen() > 30:  # TODO: configurability
-			if not player['is_replaced']:
+			if not player['is_ai']:
 				# TODO: actually replace the player by an a(utonomous)i(ntern)
-				player['is_replaced'] = True
+				player.replace_by_ai()
 
 			if not player['replace_reported']:
 				player['replace_reported'] = True
@@ -101,17 +101,21 @@ def check_players_status(room: TarotGameProxy) -> None:
 
 
 def check_empty_room(room: TarotGameProxy):
+	# Is true when all players have is_ai=True, or if there are no players
+	# left on which you could check
 	all_players_left = all(
-		[player['is_replaced'] for player in room.get_players().values()]
+		[player['is_ai'] for player in room.get_players().values()]
 	)
-	if room.game_finished or all_players_left:
+	if room.game_can_be_deleted or all_players_left:
 		room_code = tarot_rooms.get_room_code_by_room(room)
 		socketio.close_room(room_code)
-		del tarot_rooms[room_code]
+		tarot_rooms.remove(room_code)
 
 
 socketio.start_background_task(target=run_background_update,
 							   func=lobby_background_update,
 							   interval=1)
 
-socketio.on_namespace(LobbyNamespace('/lobby'))
+lobby_namespace = LobbyNamespace('/lobby')
+lobby_namespace.set_tarot_rooms(tarot_rooms)
+socketio.on_namespace(lobby_namespace)
