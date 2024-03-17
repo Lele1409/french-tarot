@@ -4,7 +4,7 @@ from flask import Blueprint, redirect, render_template, url_for
 from flask_login import current_user
 from flask_user import login_required
 
-from src.config.config_loader import config_tarot_server as config
+from src.tarot_server.config.config_loader import tarot_config
 from src.tarot_server.server import socketio
 from src.tarot_server.utils.background_runner import run_background_update
 from src.tarot_server.utils.proxies.rooms_proxy import TarotRooms
@@ -26,7 +26,7 @@ tarot_rooms: TarotRooms[TarotGameProxy] = TarotRooms()
 @views_lobby.route('/')
 @login_required
 def create():
-    code_len = int(config['Lobby.Security']['code_length']) // 2
+    code_len = int(tarot_config.get('server', 'Lobby.Security', 'code_length')) // 2
     code = secrets.token_hex(code_len).upper()
     while tarot_rooms.room_exists(code):
         code = secrets.token_hex(code_len).upper()

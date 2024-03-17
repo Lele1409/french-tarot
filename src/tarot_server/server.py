@@ -8,8 +8,8 @@ from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
 from flask_user import UserManager
 
-from src.config.app_config import AppConfigFlaskUser
-from src.config.config_loader import config_tarot_server
+from src.tarot_server.config.app_config import AppConfigFlaskUser
+from src.tarot_server.config.config_loader import tarot_config
 
 # TODO: refactor file to have configuration all in one folder, and different
 #  functions for different steps of the app creation in their own
@@ -42,12 +42,13 @@ tarot_server_db = SQLAlchemy()
 
 
 def run_tarot_server() -> None:
-    """Run the tarot webserver
-	:returns: None
+    """
+    Run the tarot webserver
+	:return None
 	"""
 
     # Connect to the database
-    db_name = config_tarot_server['Database']['Name']
+    db_name = tarot_config.get('server', 'Database', 'name')
     app_tarot_server.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_name}'
     tarot_server_db.init_app(app_tarot_server)
 
@@ -68,7 +69,7 @@ def run_tarot_server() -> None:
         # to assign to users
         from src.tarot_server.db.roles import add_new_role
 
-        roles: str = config_tarot_server['Database']['Roles']
+        roles: str = tarot_config.get('server', 'Database', 'roles')
         for role in roles.split('|'):
             add_new_role(role)
 
@@ -98,6 +99,6 @@ def run_tarot_server() -> None:
     # Run the server with websocket-capability
     socketio.run(
         app=app_tarot_server,
-        allow_unsafe_werkzeug=config_tarot_server['Server']['isDebug'],
-        debug=config_tarot_server['Server']['isDebug']
+        allow_unsafe_werkzeug=tarot_config.get('server', 'Server', 'is_debug') == 'true',
+        debug=tarot_config.get('server', 'Server', 'is_debug') == 'true'
     )

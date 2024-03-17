@@ -9,23 +9,25 @@ from wtforms.fields.simple import BooleanField, PasswordField, StringField, \
 from wtforms.validators import Email, EqualTo, InputRequired, Optional, \
     Regexp, ValidationError
 
-from src.config.config_loader import config_tarot_server as config
+from src.tarot_server.config.config_loader import tarot_config
 from src.tarot_server.db.models import User
 from src.tarot_server.utils.string_manip import count_any_occurrence as c_a_o
 
 # TODO: break down file in multiple files in one /form directory
+# TODO: replace any "..." with "." in error messages
 
-SAFE_SPECIAL_CHARS = config['Credentials']['safe_special_chars']
+SAFE_SPECIAL_CHARS = tarot_config.get('server', 'Credentials',
+                                      'safe_special_chars')
 
 
 class NotEqualTo(object):
     """Derived class from wtforms.validators.EqualTo.
-	This validator checks that two fields are not equal to each other.
+    This validator checks that two fields are not equal to each other.
 
-	:param fieldname: The name of the field to compare to.
-	:param message: Error message to raise in case of a validation error.
-	 Can be interpolated with `%(other_label)s` and `%(other_name)s`
-	 to provide a more helpful error. """
+    :param fieldname: The name of the field to compare to.
+    :param message: Error message to raise in case of a validation error.
+     Can be interpolated with `%(other_label)s` and `%(other_name)s`
+     to provide a more helpful error. """
 
     def __init__(self, fieldname, message=''):
         self.fieldname = fieldname
@@ -34,13 +36,12 @@ class NotEqualTo(object):
     def __call__(self, form, field):
         try:
             other = form[self.fieldname]
-        except KeyError:
+        except KeyError as e:
             raise ValidationError(
-                field.gettext(f"Invalid fieldname {self.fieldname}"))
+                field.gettext(f"Invalid fieldname {self.fieldname}")) from e
         if field.data == other.data:
             d = {
-                'other_label': hasattr(other,
-                                       'label') and other.label.text or self.fieldname,
+                'other_label': hasattr(other, 'label') and other.label.text or self.fieldname,
                 'other_name' : self.fieldname
             }
             message = self.message
@@ -89,14 +90,14 @@ class EmailNotInUse:
 class SecurePassword:
     def __init__(self):
         # Load values from the config
-        c = config['Credentials.Submitted']
+        c = tarot_config.get_config('server')['Credentials.Submitted']
         self.min_length = int(c['min_length'])
         self.max_length = int(c['max_length'])
         self.min_lower_chars = int(c['min_lower_chars'])
         self.min_upper_chars = int(c['min_upper_chars'])
         self.min_digits = int(c['min_digits'])
         self.min_special_chars = int(c['min_special_chars'])
-        self.can_overlap_with_mail = bool(c['can_overlap_with_mail'] == 'True')
+        self.can_overlap_with_mail = c['can_overlap_with_mail'] == 'true'
 
     def __call__(self, form, field):
         # Define the error message to show to the user in case of a failed test
@@ -107,7 +108,7 @@ class SecurePassword:
             f"Digits: >{self.min_digits}",
             f"Special characters: >{self.min_special_chars}, "
             f"can be used: {SAFE_SPECIAL_CHARS}",
-            f"The password cannot contain parts of the email-address..."]
+            "The password cannot contain parts of the email-address..."]
 
         # Get the data from the form
         password: str = field.data
@@ -224,14 +225,14 @@ class SignupForm(FlaskForm):
     )
 
 
-lobby_code_length = str(int(config['Lobby.Security']['code_length']) // 2)
+LOBBY_CODE_LENGTH = str(int(tarot_config.get('server', 'Lobby.Security', 'code_length')) // 2)
 
 
 class LobbyJoinForm(FlaskForm):
     code = StringField(
         validators=[
             InputRequired('Please enter a code...'),
-            Regexp(f"[0-9A-F]{'{' + lobby_code_length + '}'}",
+            Regexp(f"[0-9A-F]{'{' + LOBBY_CODE_LENGTH + '}'}",
                    message="Please enter a valid code...")]
     )
 
