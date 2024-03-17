@@ -14,6 +14,8 @@ from src.tarot_server.config.config_loader import tarot_config
 # TODO: refactor file to have configuration all in one folder, and different
 #  functions for different steps of the app creation in their own
 
+RUN_DEBUG = tarot_config.get('server', 'Server', 'is_debug') == 'true'
+
 # Instantiate the application and configure
 app_tarot_server = Flask(
     'tarot_server',
@@ -35,7 +37,8 @@ app_tarot_server.config['WTF_CSRF_SECRET_KEY'] = \
 
 # Instantiate the websockets
 socketio = SocketIO(app_tarot_server,
-                    logger=True)
+                    logger=RUN_DEBUG,
+                    engineio_logger=RUN_DEBUG)
 
 # Instantiate the database
 tarot_server_db = SQLAlchemy()
@@ -99,6 +102,6 @@ def run_tarot_server() -> None:
     # Run the server with websocket-capability
     socketio.run(
         app=app_tarot_server,
-        allow_unsafe_werkzeug=tarot_config.get('server', 'Server', 'is_debug') == 'true',
-        debug=tarot_config.get('server', 'Server', 'is_debug') == 'true'
+        allow_unsafe_werkzeug=RUN_DEBUG,
+        debug=RUN_DEBUG
     )
